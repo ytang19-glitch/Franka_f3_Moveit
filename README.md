@@ -428,21 +428,138 @@ This makes the motion safer, more structured, and compatible with the official F
 
 ### July 11th : 
 
+### Create a custom MoveItPy package
+
+Created a new ROS2 package for Cartesian motion control.
+
+### Main files
+
 ```bash
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
 nano ~/franka_ros2_ws/src/fr3_moveit_python/launch/cartesian_move.launch.py
 nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
 ```
+
+The package provides:
+
+- Relative Cartesian pose motion
+- MoveItPy planning
+- Optional trajectory execution
+- Official FR3 MoveIt configuration
+
+---
+
+## Planning test
+
+Run planning without executing the robot.
+
 ```bash
- ros2 launch fr3_moveit_python cartesian_move.launch.py   dz:=-0.005   execute:=false
+ros2 launch fr3_moveit_python cartesian_move.launch.py \
+    dz:=-0.005 \
+    execute:=false
 ```
 
-Check real action location
+Verified:
+
+- Robot model loaded successfully
+- SRDF loaded successfully
+- OMPL planner initialized
+- Current TCP pose obtained
+- Relative Cartesian target generated
+- Planning completed successfully
+
+---
+
+## Verify controller
+
+Check the available trajectory action.
+
 ```bash
 ros2 action list -t | grep FollowJointTrajectory
 ```
-Check service terminal
+
+Expected output:
+
+```text
+/fr3_arm_controller/follow_joint_trajectory
+```
+
+---
+
+## Verify Action Server
+
 ```bash
 ros2 action info /fr3_arm_controller/follow_joint_trajectory
 ```
+
+Expected:
+
+```text
+Action servers: 1
+```
+
+---
+
+## Verify controller status
+
+```bash
+ros2 control list_controllers
+```
+
+Expected:
+
+```text
+fr3_arm_controller             active
+joint_state_broadcaster        active
+franka_robot_state_broadcaster active
+```
+
+---
+
+## Execution issue
+
+Planning succeeds, but execution reports
+
+```text
+Action client not connected to action server
+```
+
+Although the controller and Action Server are active, MoveItPy attempts to execute immediately after startup.
+
+The Action Client may not have completed DDS discovery before the execution request is sent.
+
+---
+
+## Current workaround
+
+Before
+
+```python
+moveit.execute(...)
+```
+
+add a short delay
+
+```python
+time.sleep(5.0)
+```
+
+to allow the Action Client to connect to
+
+```text
+/fr3_arm_controller/follow_joint_trajectory
+```
+
+before sending the trajectory.
+
+---
+
+## Current Progress
+
+-  Built a custom MoveItPy package
+-  Loaded the official FR3 MoveIt configuration
+-  Implemented relative Cartesian pose planning
+-  Successfully generated trajectories
+-  Verified controller and Action Server
+-  Debugging Action Client connection timing before execution
 
