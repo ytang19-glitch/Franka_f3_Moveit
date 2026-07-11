@@ -1,1 +1,715 @@
+nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
+ 
+
+
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import time
+from typing import Optional
+
+import rclpy
+from builtin_interfaces.msg import Time
+from geometry_msgs.msg import PoseStamped
+from moveit.planning import MoveItPy
+from rclpy.duration import Duration
+from rclpy.node import Node
+from tf2_ros import Buffer, TransformException, TransformListener
+
+
+PLANNING_GROUP = "fr3_arm"
+
+
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Relative Cartesian pose-goal motion for Franka FR3."
+    )
+
+    parser.add_argument("--dx", type=float, default=0.0)
+    parser.add_argument("--dy", type=float, default=0.0)
+    parser.add_argument("--dz", type=float, default=0.0)
+
+    parser.add_argument(
+        "--execute",
+        type=str,
+        default="false",
+        help="Whether to execute the planned trajectory.",
+    )
+
+    parser.add_argument(
+        "--base-frame",
+        type=str,
+        default="fr3_link0",
+        help="Reference frame for dx, dy and dz.",
+    )
+
+    parser.add_argument(
+        "--ee-link",
+        type=str,
+        default="fr3_hand_tcp",
+        help="End-effector link.",
+    )
+
+    # Ignore ROS arguments automatically appended by ros2 launch.
+    args, _ = parser.parse_known_args()
+    return args
+
+
+def parse_bool(value: str) -> bool:
+    return value.strip().lower() in {
+        "true",
+        "1",
+        "yes",
+        "on",
+    }
+
+
+def wait_for_tcp_pose(
+    node: Node,
+    tf_buffer: Buffer,
+    base_frame: str,
+    ee_link: str,
+    timeout_seconds: float = 10.0,
+) -> PoseStamped:
+    """Read the current end-effector pose from TF."""
+
+    deadline = time.monotonic() + timeout_seconds
+    last_error: Optional[Exception] = None
+
+    while rclpy.ok() and time.monotonic() < deadline:
+        try:
+            transform = tf_buffer.lookup_transform(
+                base_frame,
+                ee_link,
+                Time(),
+                timeout=Duration(seconds=1.0),
+            )
+
+            pose = PoseStamped()
+            pose.header.frame_id = base_frame
+            pose.header.stamp = node.get_clock().now().to_msg()
+
+            pose.pose.position.x = transform.transform.translation.x
+            pose.pose.position.y = transform.transform.translation.y
+            pose.pose.position.z = transform.transform.translation.z
+            pose.pose.orientation = transform.transform.rotation
+
+            return pose
+
+        except TransformException as error:
+            last_error = error
+            node.get_logger().warning(
+                f"Waiting for TF {base_frame} -> {ee_link}: {error}"
+            )
+
+    raise RuntimeError(
+        f"Could not obtain TF {base_frame} -> {ee_link} "
+        f"within {timeout_seconds:.1f} seconds. "
+        f"Last error: {last_error}"
+    )
+
+
+def main() -> int:
+    args = parse_arguments()
+    execute_motion = parse_bool(args.execute)
+
+    rclpy.init()
+
+    helper_node = Node("fr3_cartesian_move_helper")
+    tf_buffer = Buffer()
+
+    # spin_thread=True lets the TF listener receive transforms
+    # while MoveItPy is doing its own work.
+    tf_listener = TransformListener(
+        tf_buffer,
+        helper_node,
+        spin_thread=True,
+    )
+
+    moveit = None
+
+    try:
+        helper_node.get_logger().info(
+            "Requested displacement in base frame:\n"
+            f"  base frame = {args.base_frame}\n"
+            f"  end link   = {args.ee_link}\n"
+            f"  dx         = {args.dx:.4f} m\n"
+            f"  dy         = {args.dy:.4f} m\n"
+            f"  dz         = {args.dz:.4f} m\n"
+            f"  execute    = {execute_motion}"
+        )
+
+        moveit = MoveItPy(
+            node_name="fr3_cartesian_moveitpy"
+        )
+
+        arm = moveit.get_planning_component(
+            PLANNING_GROUP
+        )
+
+        current_pose = wait_for_tcp_pose(
+            node=helper_node,
+            tf_buffer=tf_buffer,
+            base_frame=args.base_frame,
+            ee_link=args.ee_link,
+        )
+
+        target_pose = PoseStamped()
+        target_pose.header.frame_id = args.base_frame
+        target_pose.header.stamp = (
+            helper_node.get_clock().now().to_msg()
+        )
+
+        # Relative translation in the selected base frame.
+        target_pose.pose.position.x = (
+            current_pose.pose.position.x + args.dx
+        )
+        target_pose.pose.position.y = (
+            current_pose.pose.position.y + args.dy
+        )
+        target_pose.pose.position.z = (
+            current_pose.pose.position.z + args.dz
+        )
+
+        # Preserve the current end-effector orientation.
+        target_pose.pose.orientation = (
+            current_pose.pose.orientation
+        )
+
+        helper_node.get_logger().info(
+            "Current TCP position:\n"
+            f"  x = {current_pose.pose.position.x:.4f}\n"
+            f"  y = {current_pose.pose.position.y:.4f}\n"
+            f"  z = {current_pose.pose.position.z:.4f}"
+        )
+
+        helper_node.get_logger().info(
+            "Target TCP position:\n"
+            f"  x = {target_pose.pose.position.x:.4f}\n"
+            f"  y = {target_pose.pose.position.y:.4f}\n"
+            f"  z = {target_pose.pose.position.z:.4f}"
+        )
+
+        arm.set_start_state_to_current_state()
+
+        arm.set_goal_state(
+            pose_stamped_msg=target_pose,
+            pose_link=args.ee_link,
+        )
+
+        helper_node.get_logger().info(
+            "Planning..."
+        )
+
+        plan_result = arm.plan()
+
+        if not plan_result:
+            helper_node.get_logger().error(
+                "Planning failed."
+            )
+            return 1
+
+        helper_node.get_logger().info(
+            "Planning succeeded."
+        )
+
+        if not execute_motion:
+            helper_node.get_logger().info(
+                "Execution is disabled. "
+                "Run with execute:=true to move the robot."
+            )
+            return 0
+
+        helper_node.get_logger().warning(
+            "Executing trajectory on the real robot..."
+        )
+
+        # An empty controller list lets MoveIt select
+        # the configured default controller.
+        execution_result = moveit.execute(
+            plan_result.trajectory,
+            controllers=[],
+        )
+
+        helper_node.get_logger().info(
+            f"Execution result: {execution_result}"
+        )
+
+        return 0
+
+    except Exception as error:
+        helper_node.get_logger().error(
+            f"MoveItPy error: {error}"
+        )
+        return 1
+
+    finally:
+        # Destroy MoveItPy before shutting down ROS.
+        if moveit is not None:
+            del moveit
+
+        del tf_listener
+        helper_node.destroy_node()
+
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
+
+
+
+nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
+
+
+import os
+from glob import glob
+
+from setuptools import find_packages, setup
+
+
+package_name = "fr3_moveit_python"
+
+
+setup(
+    name=package_name,
+    version="0.0.1",
+
+    packages=find_packages(
+        exclude=["test"]
+    ),
+
+    data_files=[
+        (
+            "share/ament_index/resource_index/packages",
+            ["resource/" + package_name],
+        ),
+        (
+            os.path.join(
+                "share",
+                package_name,
+            ),
+            ["package.xml"],
+        ),
+        (
+            os.path.join(
+                "share",
+                package_name,
+                "launch",
+            ),
+            glob("launch/*.launch.py"),
+        ),
+    ],
+
+    install_requires=[
+        "setuptools",
+    ],
+
+    zip_safe=True,
+
+    maintainer="yujietang",
+    maintainer_email="your_email@example.com",
+
+    description=(
+        "MoveItPy Cartesian pose-goal examples "
+        "for the Franka FR3."
+    ),
+
+    license="Apache-2.0",
+
+    tests_require=[
+        "pytest",
+    ],
+
+    entry_points={
+        "console_scripts": [
+            (
+                "cartesian_move = "
+                "fr3_moveit_python.cartesian_move:main"
+            ),
+        ],
+    },
+)
+
+
+
+
+
+
+nano ~/franka_ros2_ws/src/fr3_moveit_python/launch/cartesian_move.launch.py
+
+import os
+
+import yaml
+
+from ament_index_python.packages import (
+    get_package_share_directory,
+)
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import (
+    Command,
+    FindExecutable,
+    LaunchConfiguration,
+)
+from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import (
+    ParameterValue,
+)
+
+
+def load_yaml(
+    package_name: str,
+    relative_path: str,
+):
+    package_share = get_package_share_directory(
+        package_name
+    )
+    absolute_path = os.path.join(
+        package_share,
+        relative_path,
+    )
+
+    with open(
+        absolute_path,
+        "r",
+        encoding="utf-8",
+    ) as yaml_file:
+        return yaml.safe_load(yaml_file)
+
+
+def generate_launch_description():
+    robot_ip = LaunchConfiguration("robot_ip")
+    load_gripper = LaunchConfiguration("load_gripper")
+    ee_id = LaunchConfiguration("ee_id")
+    use_fake_hardware = LaunchConfiguration(
+        "use_fake_hardware"
+    )
+    fake_sensor_commands = LaunchConfiguration(
+        "fake_sensor_commands"
+    )
+
+    dx = LaunchConfiguration("dx")
+    dy = LaunchConfiguration("dy")
+    dz = LaunchConfiguration("dz")
+    execute = LaunchConfiguration("execute")
+    base_frame = LaunchConfiguration("base_frame")
+    ee_link = LaunchConfiguration("ee_link")
+
+    declared_arguments = [
+        DeclareLaunchArgument(
+            "robot_ip",
+            default_value="172.16.0.2",
+            description="FR3 robot IP address",
+        ),
+        DeclareLaunchArgument(
+            "load_gripper",
+            default_value="true",
+        ),
+        DeclareLaunchArgument(
+            "ee_id",
+            default_value="franka_hand",
+        ),
+        DeclareLaunchArgument(
+            "use_fake_hardware",
+            default_value="false",
+        ),
+        DeclareLaunchArgument(
+            "fake_sensor_commands",
+            default_value="false",
+        ),
+        DeclareLaunchArgument(
+            "dx",
+            default_value="0.0",
+            description="Relative X displacement in metres",
+        ),
+        DeclareLaunchArgument(
+            "dy",
+            default_value="0.0",
+            description="Relative Y displacement in metres",
+        ),
+        DeclareLaunchArgument(
+            "dz",
+            default_value="0.0",
+            description="Relative Z displacement in metres",
+        ),
+        DeclareLaunchArgument(
+            "execute",
+            default_value="false",
+            description="Execute the planned trajectory",
+        ),
+        DeclareLaunchArgument(
+            "base_frame",
+            default_value="fr3_link0",
+        ),
+        DeclareLaunchArgument(
+            "ee_link",
+            default_value="fr3_hand_tcp",
+        ),
+    ]
+
+    # -----------------------------------------------------
+    # Robot description: official Franka URDF Xacro
+    # -----------------------------------------------------
+
+    fr3_urdf_xacro = os.path.join(
+        get_package_share_directory(
+            "franka_description"
+        ),
+        "robots",
+        "fr3",
+        "fr3.urdf.xacro",
+    )
+
+    robot_description_command = Command(
+        [
+            FindExecutable(name="xacro"),
+            " ",
+            fr3_urdf_xacro,
+            " hand:=",
+            load_gripper,
+            " robot_ip:=",
+            robot_ip,
+            " ee_id:=",
+            ee_id,
+            " use_fake_hardware:=",
+            use_fake_hardware,
+            " fake_sensor_commands:=",
+            fake_sensor_commands,
+            " ros2_control:=true",
+        ]
+    )
+
+    robot_description = {
+        "robot_description": ParameterValue(
+            robot_description_command,
+            value_type=str,
+        )
+    }
+
+    # -----------------------------------------------------
+    # Semantic description: official Franka SRDF Xacro
+    # -----------------------------------------------------
+
+    fr3_srdf_xacro = os.path.join(
+        get_package_share_directory(
+            "franka_description"
+        ),
+        "robots",
+        "fr3",
+        "fr3.srdf.xacro",
+    )
+
+    robot_description_semantic_command = Command(
+        [
+            FindExecutable(name="xacro"),
+            " ",
+            fr3_srdf_xacro,
+            " hand:=",
+            load_gripper,
+            " ee_id:=",
+            ee_id,
+        ]
+    )
+
+    robot_description_semantic = {
+        "robot_description_semantic": ParameterValue(
+            robot_description_semantic_command,
+            value_type=str,
+        )
+    }
+
+    # -----------------------------------------------------
+    # IK and joint limits
+    # -----------------------------------------------------
+
+    kinematics_config = {
+        "robot_description_kinematics": load_yaml(
+            "franka_fr3_moveit_config",
+            "config/kinematics.yaml",
+        )
+    }
+
+    joint_limits_config = {
+        "robot_description_planning": load_yaml(
+            "franka_fr3_moveit_config",
+            "config/fr3_joint_limits.yaml",
+        )
+    }
+
+    # -----------------------------------------------------
+    # OMPL pipeline for MoveItPy / MoveItCpp
+    # -----------------------------------------------------
+
+    ompl_yaml = load_yaml(
+        "franka_fr3_moveit_config",
+        "config/ompl_planning.yaml",
+    )
+
+    ompl_pipeline = {
+        "planning_plugins": [
+            "ompl_interface/OMPLPlanner",
+        ],
+        "request_adapters": [
+            "default_planning_request_adapters/"
+            "ResolveConstraintFrames",
+            "default_planning_request_adapters/"
+            "ValidateWorkspaceBounds",
+            "default_planning_request_adapters/"
+            "CheckStartStateBounds",
+            "default_planning_request_adapters/"
+            "CheckStartStateCollision",
+        ],
+        "response_adapters": [
+            "default_planning_response_adapters/"
+            "AddTimeOptimalParameterization",
+            "default_planning_response_adapters/"
+            "ValidateSolution",
+            "default_planning_response_adapters/"
+            "DisplayMotionPath",
+        ],
+        "start_state_max_bounds_error": 0.1,
+    }
+
+    if ompl_yaml:
+        ompl_pipeline.update(ompl_yaml)
+
+    moveit_py_configuration = {
+        "planning_scene_monitor_options": {
+            "name": "planning_scene_monitor",
+            "robot_description": "robot_description",
+            "joint_state_topic": "/joint_states",
+            "attached_collision_object_topic":
+                "/attached_collision_object",
+            "publish_planning_scene_topic":
+                "/moveit_cpp/publish_planning_scene",
+            "monitored_planning_scene_topic":
+                "/monitored_planning_scene",
+            "wait_for_initial_state_timeout": 10.0,
+        },
+
+        "planning_pipelines": {
+            "pipeline_names": ["ompl"],
+        },
+
+        "plan_request_params": {
+            "planning_attempts": 1,
+            "planning_pipeline": "ompl",
+            "planner_id":
+                "RRTConnectkConfigDefault",
+            "planning_time": 5.0,
+            "max_velocity_scaling_factor": 0.1,
+            "max_acceleration_scaling_factor": 0.1,
+        },
+
+        "ompl": ompl_pipeline,
+    }
+
+    # -----------------------------------------------------
+    # Official FR3 MoveIt controller configuration
+    # -----------------------------------------------------
+
+    controller_yaml = load_yaml(
+        "franka_fr3_moveit_config",
+        "config/fr3_controllers.yaml",
+    )
+
+    moveit_controllers = {
+        "moveit_simple_controller_manager":
+            controller_yaml,
+        "moveit_controller_manager":
+            "moveit_simple_controller_manager/"
+            "MoveItSimpleControllerManager",
+    }
+
+    trajectory_execution = {
+        "moveit_manage_controllers": True,
+        "trajectory_execution."
+        "allowed_execution_duration_scaling": 1.2,
+        "trajectory_execution."
+        "allowed_goal_duration_margin": 0.5,
+        "trajectory_execution."
+        "allowed_start_tolerance": 0.01,
+    }
+
+    cartesian_move_node = Node(
+        package="fr3_moveit_python",
+        executable="cartesian_move",
+        name="fr3_cartesian_move",
+        output="screen",
+
+        arguments=[
+            "--dx",
+            dx,
+            "--dy",
+            dy,
+            "--dz",
+            dz,
+            "--execute",
+            execute,
+            "--base-frame",
+            base_frame,
+            "--ee-link",
+            ee_link,
+        ],
+
+        parameters=[
+            robot_description,
+            robot_description_semantic,
+            kinematics_config,
+            joint_limits_config,
+            moveit_py_configuration,
+            moveit_controllers,
+            trajectory_execution,
+            {
+                "use_sim_time": False,
+            },
+        ],
+    )
+
+    return LaunchDescription(
+        declared_arguments + [cartesian_move_node]
+    )
+
+Check if there is get_node in these codes
+
+grep -R -n "get_node" \
+~/franka_ros2_ws/src/fr3_moveit_python
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
