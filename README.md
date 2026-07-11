@@ -433,3 +433,16 @@ nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
 nano ~/franka_ros2_ws/src/fr3_moveit_python/launch/cartesian_move.launch.py
 nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
 ```
+```bash
+ ros2 launch fr3_moveit_python cartesian_move.launch.py   dz:=-0.005   execute:=false
+```
+
+Check real action location
+```bash
+ros2 action list -t | grep FollowJointTrajectory
+```
+Check service terminal
+```bash
+ros2 action info /fr3_arm_controller/follow_joint_trajectory
+```
+
