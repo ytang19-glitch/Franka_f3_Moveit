@@ -741,3 +741,18 @@ before sending the trajectory.
 -  Verified controller and Action Server
 -  Debugging Action Client connection timing before execution
 
+
+Franka_f3_Moveit/
+├── README.md
+├── Requirements.md
+├── Development_Log.md
+├── docs/
+│   ├── Architecture.md
+│   ├── Code_OMPL.md
+│   └── Troubleshooting.md
+├── fr3_moveit_python/
+├── launch/
+├── package.xml
+└── setup.py
+
+
