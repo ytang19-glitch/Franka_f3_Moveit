@@ -1,6 +1,4 @@
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
- 
-
 
 #!/usr/bin/env python3
 
@@ -261,10 +259,7 @@ if __name__ == "__main__":
 
 
 
-
-
 nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
-
 
 import os
 from glob import glob
@@ -334,9 +329,6 @@ setup(
         ],
     },
 )
-
-
-
 
 
 
