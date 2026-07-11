@@ -425,3 +425,11 @@ Directly command hardware interface
 ```
 
 This makes the motion safer, more structured, and compatible with the official Franka ROS 2 MoveIt pipeline.
+
+### July 11th : 
+
+```bash
+nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
+nano ~/franka_ros2_ws/src/fr3_moveit_python/launch/cartesian_move.launch.py
+nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
+```
