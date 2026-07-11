@@ -1,22 +1,21 @@
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
-
 #!/usr/bin/env python3
 
 import argparse
+import os
 import sys
 import time
-from typing import Optional
 
 import rclpy
-from builtin_interfaces.msg import Time
 from geometry_msgs.msg import PoseStamped
 from moveit.planning import MoveItPy
-from rclpy.duration import Duration
-from rclpy.node import Node
-from tf2_ros import Buffer, TransformException, TransformListener
+from rclpy.logging import get_logger
+from scipy.spatial.transform import Rotation
 
 
 PLANNING_GROUP = "fr3_arm"
+DEFAULT_BASE_FRAME = "fr3_link0"
+DEFAULT_EE_LINK = "fr3_hand_tcp"
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -32,24 +31,21 @@ def parse_arguments() -> argparse.Namespace:
         "--execute",
         type=str,
         default="false",
-        help="Whether to execute the planned trajectory.",
     )
 
     parser.add_argument(
         "--base-frame",
         type=str,
-        default="fr3_link0",
-        help="Reference frame for dx, dy and dz.",
+        default=DEFAULT_BASE_FRAME,
     )
 
     parser.add_argument(
         "--ee-link",
         type=str,
-        default="fr3_hand_tcp",
-        help="End-effector link.",
+        default=DEFAULT_EE_LINK,
     )
 
-    # Ignore ROS arguments automatically appended by ros2 launch.
+    # Ignore ROS arguments added by ros2 launch.
     args, _ = parser.parse_known_args()
     return args
 
@@ -63,81 +59,25 @@ def parse_bool(value: str) -> bool:
     }
 
 
-def wait_for_tcp_pose(
-    node: Node,
-    tf_buffer: Buffer,
-    base_frame: str,
-    ee_link: str,
-    timeout_seconds: float = 10.0,
-) -> PoseStamped:
-    """Read the current end-effector pose from TF."""
-
-    deadline = time.monotonic() + timeout_seconds
-    last_error: Optional[Exception] = None
-
-    while rclpy.ok() and time.monotonic() < deadline:
-        try:
-            transform = tf_buffer.lookup_transform(
-                base_frame,
-                ee_link,
-                Time(),
-                timeout=Duration(seconds=1.0),
-            )
-
-            pose = PoseStamped()
-            pose.header.frame_id = base_frame
-            pose.header.stamp = node.get_clock().now().to_msg()
-
-            pose.pose.position.x = transform.transform.translation.x
-            pose.pose.position.y = transform.transform.translation.y
-            pose.pose.position.z = transform.transform.translation.z
-            pose.pose.orientation = transform.transform.rotation
-
-            return pose
-
-        except TransformException as error:
-            last_error = error
-            node.get_logger().warning(
-                f"Waiting for TF {base_frame} -> {ee_link}: {error}"
-            )
-
-    raise RuntimeError(
-        f"Could not obtain TF {base_frame} -> {ee_link} "
-        f"within {timeout_seconds:.1f} seconds. "
-        f"Last error: {last_error}"
-    )
-
-
-def main() -> int:
+def main() -> None:
     args = parse_arguments()
     execute_motion = parse_bool(args.execute)
 
     rclpy.init()
+    logger = get_logger("fr3_cartesian_move")
 
-    helper_node = Node("fr3_cartesian_move_helper")
-    tf_buffer = Buffer()
-
-    # spin_thread=True lets the TF listener receive transforms
-    # while MoveItPy is doing its own work.
-    tf_listener = TransformListener(
-        tf_buffer,
-        helper_node,
-        spin_thread=True,
+    logger.info(
+        "Requested displacement:\n"
+        f"  base frame = {args.base_frame}\n"
+        f"  end link   = {args.ee_link}\n"
+        f"  dx         = {args.dx:.4f} m\n"
+        f"  dy         = {args.dy:.4f} m\n"
+        f"  dz         = {args.dz:.4f} m\n"
+        f"  execute    = {execute_motion}"
     )
 
-    moveit = None
-
     try:
-        helper_node.get_logger().info(
-            "Requested displacement in base frame:\n"
-            f"  base frame = {args.base_frame}\n"
-            f"  end link   = {args.ee_link}\n"
-            f"  dx         = {args.dx:.4f} m\n"
-            f"  dy         = {args.dy:.4f} m\n"
-            f"  dz         = {args.dz:.4f} m\n"
-            f"  execute    = {execute_motion}"
-        )
-
+        # Official MoveItPy-style initialization.
         moveit = MoveItPy(
             node_name="fr3_cartesian_moveitpy"
         )
@@ -146,189 +86,133 @@ def main() -> int:
             PLANNING_GROUP
         )
 
-        current_pose = wait_for_tcp_pose(
-            node=helper_node,
-            tf_buffer=tf_buffer,
-            base_frame=args.base_frame,
-            ee_link=args.ee_link,
+        logger.info("MoveItPy instance created.")
+
+        # Use current joint state as the planning start.
+        arm.set_start_state_to_current_state()
+
+        # Read the current robot state from MoveIt's planning scene.
+        planning_scene_monitor = (
+            moveit.get_planning_scene_monitor()
         )
+
+        with planning_scene_monitor.read_only() as scene:
+            current_state = scene.current_state
+
+            transform = (
+                current_state.get_global_link_transform(
+                    args.ee_link
+                )
+            ).copy()
+
+        # The transform returned above is expressed in the
+        # robot model's global/model frame, normally fr3_link0.
+        current_x = float(transform[0, 3])
+        current_y = float(transform[1, 3])
+        current_z = float(transform[2, 3])
+
+        rotation_matrix = transform[:3, :3]
+        quaternion = Rotation.from_matrix(
+            rotation_matrix
+        ).as_quat()
 
         target_pose = PoseStamped()
         target_pose.header.frame_id = args.base_frame
-        target_pose.header.stamp = (
-            helper_node.get_clock().now().to_msg()
-        )
 
-        # Relative translation in the selected base frame.
         target_pose.pose.position.x = (
-            current_pose.pose.position.x + args.dx
+            current_x + args.dx
         )
         target_pose.pose.position.y = (
-            current_pose.pose.position.y + args.dy
+            current_y + args.dy
         )
         target_pose.pose.position.z = (
-            current_pose.pose.position.z + args.dz
+            current_z + args.dz
         )
 
-        # Preserve the current end-effector orientation.
-        target_pose.pose.orientation = (
-            current_pose.pose.orientation
+        # Keep the current orientation unchanged.
+        target_pose.pose.orientation.x = float(
+            quaternion[0]
+        )
+        target_pose.pose.orientation.y = float(
+            quaternion[1]
+        )
+        target_pose.pose.orientation.z = float(
+            quaternion[2]
+        )
+        target_pose.pose.orientation.w = float(
+            quaternion[3]
         )
 
-        helper_node.get_logger().info(
+        logger.info(
             "Current TCP position:\n"
-            f"  x = {current_pose.pose.position.x:.4f}\n"
-            f"  y = {current_pose.pose.position.y:.4f}\n"
-            f"  z = {current_pose.pose.position.z:.4f}"
+            f"  x = {current_x:.4f}\n"
+            f"  y = {current_y:.4f}\n"
+            f"  z = {current_z:.4f}"
         )
 
-        helper_node.get_logger().info(
+        logger.info(
             "Target TCP position:\n"
             f"  x = {target_pose.pose.position.x:.4f}\n"
             f"  y = {target_pose.pose.position.y:.4f}\n"
             f"  z = {target_pose.pose.position.z:.4f}"
         )
 
-        arm.set_start_state_to_current_state()
-
+        # Official pose-goal pattern.
         arm.set_goal_state(
             pose_stamped_msg=target_pose,
             pose_link=args.ee_link,
         )
 
-        helper_node.get_logger().info(
-            "Planning..."
-        )
+        logger.info("Planning trajectory...")
 
         plan_result = arm.plan()
 
         if not plan_result:
-            helper_node.get_logger().error(
-                "Planning failed."
+            logger.error("Planning failed.")
+            os._exit(1)
+
+        logger.info("Planning succeeded.")
+
+        if execute_motion:
+            logger.warning(
+                "Executing trajectory on the robot..."
             )
-            return 1
 
-        helper_node.get_logger().info(
-            "Planning succeeded."
-        )
+            robot_trajectory = plan_result.trajectory
 
-        if not execute_motion:
-            helper_node.get_logger().info(
-                "Execution is disabled. "
-                "Run with execute:=true to move the robot."
+            execution_result = moveit.execute(
+                robot_trajectory,
+                controllers=[],
             )
-            return 0
 
-        helper_node.get_logger().warning(
-            "Executing trajectory on the real robot..."
-        )
+            logger.info(
+                f"Execution result: {execution_result}"
+            )
 
-        # An empty controller list lets MoveIt select
-        # the configured default controller.
-        execution_result = moveit.execute(
-            plan_result.trajectory,
-            controllers=[],
-        )
+            # Give background ROS threads a short time to finish logging.
+            time.sleep(0.5)
 
-        helper_node.get_logger().info(
-            f"Execution result: {execution_result}"
-        )
+        else:
+            logger.info(
+                "Execution disabled. "
+                "Use execute:=true to move the robot."
+            )
 
-        return 0
+        # installed Jazzy build crashes while destroying MoveItCpp.
+        # Exit without running the problematic Python/C++ destructor chain.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)
 
     except Exception as error:
-        helper_node.get_logger().error(
-            f"MoveItPy error: {error}"
-        )
-        return 1
-
-    finally:
-        # Destroy MoveItPy before shutting down ROS.
-        if moveit is not None:
-            del moveit
-
-        del tf_listener
-        helper_node.destroy_node()
-
-        if rclpy.ok():
-            rclpy.shutdown()
+        logger.error(f"MoveItPy error: {error}")
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(1)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
-
-
-
-nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
-
-import os
-from glob import glob
-
-from setuptools import find_packages, setup
-
-
-package_name = "fr3_moveit_python"
-
-
-setup(
-    name=package_name,
-    version="0.0.1",
-
-    packages=find_packages(
-        exclude=["test"]
-    ),
-
-    data_files=[
-        (
-            "share/ament_index/resource_index/packages",
-            ["resource/" + package_name],
-        ),
-        (
-            os.path.join(
-                "share",
-                package_name,
-            ),
-            ["package.xml"],
-        ),
-        (
-            os.path.join(
-                "share",
-                package_name,
-                "launch",
-            ),
-            glob("launch/*.launch.py"),
-        ),
-    ],
-
-    install_requires=[
-        "setuptools",
-    ],
-
-    zip_safe=True,
-
-    maintainer="yujietang",
-    maintainer_email="your_email@example.com",
-
-    description=(
-        "MoveItPy Cartesian pose-goal examples "
-        "for the Franka FR3."
-    ),
-
-    license="Apache-2.0",
-
-    tests_require=[
-        "pytest",
-    ],
-
-    entry_points={
-        "console_scripts": [
-            (
-                "cartesian_move = "
-                "fr3_moveit_python.cartesian_move:main"
-            ),
-        ],
-    },
-)
+    main()
 
 
 
