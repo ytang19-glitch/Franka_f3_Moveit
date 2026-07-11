@@ -1,11 +1,6 @@
 # Franka_f3_Moveit
 
-
 # Franka FR3 MoveIt Cartesian Motion Demo
-
-## Date
-
-July 11
 
 ## Goal
 
@@ -14,14 +9,211 @@ This project tests Cartesian motion control for the Franka FR3 robot **without D
 The target demo is simple:
 
 ```text
-Move the FR3 end-effector downward by 1 cm using MoveIt
+Move the FR3 end-effector downward by x cm using MoveIt
+```
+The purpose is to verify that the MoveIt pipeline can communicate correctly with the Franka ROS 2 controller and execute a Cartesian trajectory on the robot.
+
+## Step 1 ; Ros2 Package
+
+# Creating the `fr3_moveit_python` Package
+
+## 1. Create a ROS 2 Python package
+
+Go to your ROS2 workspace:
+
+```bash
+cd ~/franka_ros2_ws/src
 ```
 
-The purpose is to verify that the MoveIt pipeline can communicate correctly with the Franka ROS 2 controller and execute a Cartesian trajectory on the robot.
+Create a new Python package:
+
+```bash
+ros2 pkg create fr3_moveit_python \
+    --build-type ament_python \
+    --dependencies \
+        rclpy \
+        geometry_msgs \
+        moveit_ros_planning_interface
+```
+
+The package structure becomes:
+
+```text
+fr3_moveit_python/
+├── fr3_moveit_python/
+│   └── __init__.py
+├── resource/
+├── test/
+├── package.xml
+├── setup.cfg
+└── setup.py
+```
 
 ---
 
-## System Overview
+# 2. Create the motion script
+
+Create the Python node:
+
+```bash
+nano \
+~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
+```
+
+This node is responsible for:
+
+- Initialize MoveItPy
+- Read the current TCP pose
+- Apply a relative Cartesian displacement
+- Plan a trajectory
+- Optionally execute the trajectory
+
+---
+
+# 3. Create the launch file
+
+Create the launch directory:
+
+```bash
+mkdir -p \
+~/franka_ros2_ws/src/fr3_moveit_python/launch
+```
+
+Create the launch file:
+
+```bash
+nano \
+~/franka_ros2_ws/src/fr3_moveit_python/launch/cartesian_move.launch.py
+```
+
+The launch file loads the official MoveIt configuration and passes all required parameters to the Python node.
+
+---
+
+# 4. Modify `setup.py`
+
+Open:
+
+```bash
+nano \
+~/franka_ros2_ws/src/fr3_moveit_python/setup.py
+```
+
+Update it so that:
+
+- `cartesian_move.py` is installed as a ROS2 executable
+- `cartesian_move.launch.py` is installed into the package
+
+---
+
+# 5. Build the package
+
+Go to the workspace:
+
+```bash
+cd ~/franka_ros2_ws
+```
+
+Source ROS2:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+```
+
+Build:
+
+```bash
+colcon build \
+    --symlink-install \
+    --packages-select fr3_moveit_python
+```
+
+Source the workspace:
+
+```bash
+source ~/franka_ros2_ws/install/setup.bash
+```
+
+---
+
+# 6. Verify the installation
+
+Check the executable:
+
+```bash
+ros2 pkg executables fr3_moveit_python
+```
+
+Expected:
+
+```text
+fr3_moveit_python cartesian_move
+```
+
+Check the installed launch file:
+
+```bash
+ls \
+~/franka_ros2_ws/install/fr3_moveit_python/share/fr3_moveit_python/launch/
+```
+
+Expected:
+
+```text
+cartesian_move.launch.py
+```
+
+---
+
+# 7. Run the package
+
+Planning only:
+
+```bash
+ros2 launch fr3_moveit_python \
+    cartesian_move.launch.py \
+    dz:=-0.005 \
+    execute:=false
+```
+
+Execute on the robot:
+
+```bash
+ros2 launch fr3_moveit_python \
+    cartesian_move.launch.py \
+    dz:=-0.05 \
+    execute:=true
+```
+
+---
+
+# Workflow
+
+```text
+Create ROS2 package
+        │
+        ▼
+Create cartesian_move.py
+        │
+        ▼
+Create cartesian_move.launch.py
+        │
+        ▼
+Modify setup.py
+        │
+        ▼
+Build the package
+        │
+        ▼
+Source the workspace
+        │
+        ▼
+Launch the Cartesian motion node
+```
+
+
+
+## Step 2 ; System Overview
 
 The control flow is:
 
@@ -190,7 +382,7 @@ Without these parameters, MoveIt may start but cannot correctly plan or execute 
 
 ---
 
-## Check Franka Controller Configuration
+## Step 3: Check Franka Controller Configuration
 
 Go to the Franka MoveIt config package:
 
@@ -225,23 +417,17 @@ The command interface may be:
 ```text
 effort
 ```
-
-This means MoveIt sends a desired joint trajectory, and the controller tracks the trajectory through effort control.
+This means MoveIt sends a desired joint trajectory, and the controller tracks the trajectory through effort control.(PID)
 
 Simplified control logic:
 
 ```text
 effort = Kp(position_error) + Kd(velocity_error) + Ki(integral_error)
 ```
-
 or:
-
 ```text
-τ = Kp(q_desired - q_actual)
-  + Kd(qd_desired - qd_actual)
-  + Ki∫(q_error dt)
+τ = Kp(q_desired - q_actual)+ Kd(qd_desired - qd_actual) + Ki∫(q_error dt)
 ```
-
 So MoveIt does not directly send torque for Cartesian motion.
 MoveIt sends a joint trajectory, and the controller converts tracking error into effort command.
 
@@ -283,13 +469,6 @@ Check hardware interfaces:
 
 ```bash
 ros2 control list_hardware_interfaces -c /fr3/controller_manager
-```
-
-If there is no namespace, try:
-
-```bash
-ros2 control list_controllers
-ros2 control list_hardware_interfaces
 ```
 
 Expected controller:
@@ -426,13 +605,8 @@ Directly command hardware interface
 
 This makes the motion safer, more structured, and compatible with the official Franka ROS 2 MoveIt pipeline.
 
-### July 11th : 
 
-### Create a custom MoveItPy package
-
-Created a new ROS2 package for Cartesian motion control.
-
-### Main files
+#### Step 4  Experiment before actual running 
 
 ```bash
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
@@ -528,6 +702,10 @@ Although the controller and Action Server are active, MoveItPy attempts to execu
 
 The Action Client may not have completed DDS discovery before the execution request is sent.
 
+```bash
+        time.sleep(1.0)
+        flush_and_exit(0)
+```
 ---
 
 ## Current workaround
