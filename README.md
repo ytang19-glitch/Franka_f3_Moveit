@@ -741,6 +741,7 @@ before sending the trajectory.
 -  Verified controller and Action Server
 -  Debugging Action Client connection timing before execution
 
+···bash
 
 Franka_f3_Moveit/
 ├── README.md
@@ -755,4 +756,5 @@ Franka_f3_Moveit/
 ├── package.xml
 └── setup.py
 
+```
 
