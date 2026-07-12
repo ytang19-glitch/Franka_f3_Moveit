@@ -25,7 +25,7 @@ Cartesian motion with MoveItPy
 
 ---
 
-# July 7: Testing the Official Franka ROS 2 Example Controller
+# July 7th : Testing the Official Franka ROS 2 Example Controller
 
 ## Goal
 
@@ -48,7 +48,7 @@ The following conditions were required before launching the official example con
 ```text
 FR3 powered on
 FCI activated in Franka Desk
-Host PC connected to the C2 Ethernet port
+Host PC connected to the C2 Ethernet port ( wire network )
 Host PC configured in the robot subnet
 Robot IP: 172.16.0.2
 Namespace: fr3
