@@ -387,7 +387,7 @@ Without these parameters, MoveIt may start but cannot correctly plan or execute 
 Go to the Franka MoveIt config package:
 
 ```bash
-cd ~/franka_ros2_ws/src/franka_ros2/franka_fr3_moveit_config/config
+cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/config
 ```
 
 Then check the controller configuration, for example:
