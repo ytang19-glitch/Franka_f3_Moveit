@@ -377,34 +377,24 @@ Go to the Franka MoveIt config package:
 
 ```bash
 cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/config
-```
-
-Then check the controller configuration, for example:
-
-```bash
 ls
 ```
-
-Look for files related to:
+FInd:
 
 ```text
-fr3_ros_controllers.yaml
-ros2_controllers.yaml
-moveit_controllers.yaml
+- fr3_ros_controllers.yaml
+- fr3_controllers.yaml
+- fr3_joint_limits.yaml
+- ompl_planning.yaml
+- kinematics.yaml
 ```
-
-The official Franka MoveIt configuration normally uses:
+In "fr3_ros_controllers.yaml"
 
 ```text
 fr3_arm_controller
-```
+JointTrajectoryController`.
+The command interface is effort
 
-This controller is usually a `JointTrajectoryController`.
-
-The command interface may be:
-
-```text
-effort
 ```
 This means MoveIt sends a desired joint trajectory, and the controller tracks the trajectory through effort control.(PID)
 
@@ -618,7 +608,7 @@ Run planning without executing the robot.
 
 ```bash
 ros2 launch fr3_moveit_python cartesian_move.launch.py \
-    dz:=-0.005 \
+    dz:=-0.05 \
     execute:=false
 ```
 
