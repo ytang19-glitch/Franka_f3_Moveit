@@ -310,23 +310,12 @@ Python file         → send Cartesian motion request
 
 Before writing the custom launch file, inspect the official Franka MoveIt launch file.
 
-### Print the official MoveIt launch file
+### Find the official MoveIt launch file
 
 ```bash
-sed -n '1,260p' \
-"$(ros2 pkg prefix franka_fr3_moveit_config)/share/franka_fr3_moveit_config/launch/moveit.launch.py"
+cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/launch
+nano ~/franka_ros2_ws/src/franka_fr3_moveit_config/launch/moveit.launch.py
 ```
-
-Explanation:
-
-```text
-sed        stream editor
--n         do not print everything automatically
-'1,260p'   print lines 1 to 260
-ros2 pkg prefix franka_fr3_moveit_config
-           find the installed path of the package
-```
-
 ---
 
 ## Check Whether Official Launch Uses `MoveItConfigsBuilder`
