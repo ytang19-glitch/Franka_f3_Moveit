@@ -1,4 +1,8 @@
 
+Purpose
+
+Explain the entire software architecture.
+
 
 ```bash
 Python Script
