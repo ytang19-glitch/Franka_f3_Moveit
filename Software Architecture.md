@@ -1,19 +1,24 @@
 ## Component Responsibilities
 
-setup.py 
-```bash
-– Registers and installs the ROS 2 Python package during colcon build.
-```
+### setup.py 
 
-cartesian_move.launch.py
-```text
-– Starts the complete runtime environment, including MoveIt, ROS 2 controllers, RViz, and the application node.
-```
+Registers and installs the ROS 2 Python package during colcon build.
 
-cartesian_move.py
-```text
+### cartesian_move.launch.py
+
+Adapted from the official franka_fr3_moveit_config launch files. 
+It reuses the official MoveIt and robot configuration while launching the complete runtime environment, including:
+- MoveIt
+- ROS 2 controllers
+- RViz
+- The custom application node (cartesian_move.py).
+
+### cartesian_move.py
+
 – Implements the robot's Cartesian motion logic using the MoveIt Python API.
-```
+
+
+### Architecture:
 
 ```bash
 
@@ -47,3 +52,9 @@ Franka Driver
       │
 Franka FR3
 ```
+
+
+
+
+
+
