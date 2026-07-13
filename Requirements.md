@@ -11,7 +11,6 @@
 ## Software
 
 - ROS2 Jazzy
-- MoveIt2
 - MoveItPy
 - libfranka (over 0.18.0)
 - Franka ROS 2
