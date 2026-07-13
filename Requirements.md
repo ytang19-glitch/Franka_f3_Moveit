@@ -4,13 +4,26 @@
 
 - Franka FR3 robot
 - Ubuntu 24.04
-- ROS 2 Jazzy
-- Franka ROS 2
-- MoveIt 2
+- Ethernet
+- FCI enabled
+
+
+## Software
+
+- ROS2 Jazzy
+- MoveIt2
+- MoveItPy
 - libfranka (over 0.18.0)
-- FCI enabled on the robot
+- Franka ROS 2
+- python3-scipy
 
 ---
+
+## Workspace
+
+```text
+~/franka_ros2_ws
+```
 
 ## Required ROS 2 packages
 
@@ -21,6 +34,8 @@ sudo apt install \
     ros-jazzy-moveit \
     ros-jazzy-moveit-py \
     python3-scipy
+
+ros2 pkg create ...
 ```
 
 (Optional)
@@ -35,7 +50,7 @@ sudo apt install \
 
 ## Required Franka packages
 
-The following packages should already exist in your workspace:
+The following packages should already exist in workspace:
 
 ```text
 franka_ros2
@@ -54,8 +69,3 @@ ros2 pkg list | grep franka
 
 ---
 
-## Workspace
-
-```text
-~/franka_ros2_ws
-```
