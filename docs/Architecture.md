@@ -35,9 +35,8 @@ ros2_control
 Franka Hardware
       │
       ▼
+    FR3
 ```
-FR3
-
 
 
 
