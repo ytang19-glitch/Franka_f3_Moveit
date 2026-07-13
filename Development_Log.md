@@ -338,3 +338,14 @@ Verify FollowJointTrajectory action server
 Add delay if MoveItPy action client connects too early
 Test small Cartesian motion first, e.g. dz:=-0.005
 ```
+
+# July 13 — Organize the github file 
+
+Update:
+```bash
+launch
+requirement
+setup.py
+
+```
+
