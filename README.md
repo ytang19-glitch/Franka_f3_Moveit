@@ -720,15 +720,23 @@ before sending the trajectory.
 -  Verified controller and Action Server
 -  Debugging Action Client connection timing before execution
 
-Franka_f3_Moveit/
-├── README.md
-├── Requirements.md
-├── Development_Log.md
-├── docs/
-│   ├── Architecture.md
-│   ├── Code_OMPL.md
-│   └── Troubleshooting.md
-├── fr3_moveit_python/
-├── launch/
-├── package.xml
-└── setup.py
+### Repository Structure
+
+```bash
+FR3 MoveIt Python
+│
+├── README.md                 ← Project overview
+├── Software Architecture.md  ← Software design
+├── Requirements.md           ← Hardware & software requirements
+├── Development_Log.md        ← Development history
+│
+├── launch/                   ← ROS2 launch files
+├── fr3_moveit_python/        ← Application source code
+├── docs/                     ← Detailed documentation
+├── resource/                 ← ROS2 package resources
+├── test/                     ← Unit tests
+│
+├── package.xml               ← ROS2 package metadata
+└── setup.py                  ← Package installation
+```
+
