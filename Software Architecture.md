@@ -20,6 +20,37 @@ It reuses the official MoveIt and robot configuration while launching the comple
 
 ### Architecture:
 
+
+#### Overall Architecture
+
+```bash
+User
+   │
+   ▼
+cartesian_move.launch.py
+   │
+   ▼
+cartesian_move.py
+   │
+   ▼
+MoveIt Python API
+   │
+   ▼
+MoveIt Planning Pipeline
+   │
+   ▼
+ROS2 Controllers
+   │
+   ▼
+Franka Driver
+   │
+   ▼
+FR3
+```
+
+#### Architecture (Build vs Runtime)
+
+#### Build time
 ```bash
 
                 Build Time
@@ -34,9 +65,12 @@ colcon build
 Executable Installed
       │
 ──────────────────────────────────────
-
+```
+#### Runtime
+```bash
                Runtime
 ──────────────────────────────────────
+
 
 ros2 launch
       │
@@ -44,17 +78,21 @@ cartesian_move.launch.py
       │
 cartesian_move.py
       │
-MoveIt
+MoveIt python API
       │
 ROS2 Controllers
       │
 Franka Driver
       │
 Franka FR3
+
+──────────────────────────────────────
 ```
+#### EXplain:
 
-
-
+- MoveIt Config:	Robot configuration
+- ROS2 Controllers:	Execute trajectories
+- libfranka:	Hardware communication
 
 
 
