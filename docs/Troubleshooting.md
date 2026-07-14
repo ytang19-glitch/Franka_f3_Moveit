@@ -1,1 +1,455 @@
 
+## Troubleshooting Guide
+
+This document covers common issues when building and running the **Franka FR3 MoveIt Cartesian Motion Demo** on **native Ubuntu 24.04 with ROS 2 Jazzy**.
+
+
+## 1. ROS 2 Environment Not Sourced
+
+### Problem
+
+Commands cannot find ROS 2 packages.
+
+Example:
+
+ros2: command not found
+
+or:
+
+Package 'fr3_moveit_python' not found
+
+## Cause
+
+ROS 2 environment is not loaded.
+
+## Solution
+
+Source ROS 2:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+
+Source workspace:
+
+source ~/franka_ros2_ws/install/setup.bash
+```
+To automatically source:
+
+```bash
+echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+```
+2. Workspace Build Failed
+Problem
+colcon build fails.
+Example:
+
+Failed <<< fr3_moveit_python
+Possible Causes
+Missing dependencies
+Incorrect package structure
+Python syntax error
+Wrong ROS 2 package format
+Solution
+
+Install dependencies:
+
+```bash
+cd ~/franka_ros2_ws
+
+rosdep install \
+--from-paths src \
+--ignore-src \
+-r -y
+```
+Clean build:
+```bash
+rm -rf build install log
+```
+Rebuild:
+```bash
+colcon build --symlink-install
+```
+3. Python Package Structure Incorrect
+Problem
+
+ROS 2 cannot find the Python node.
+
+Make sure:
+```bash
+chmod +x fr3_moveit_python/cartesian_move.py
+```
+4. Python Node Not Installed as ROS 2 Executable
+Problem
+Command:
+```bash
+ros2 pkg executables fr3_moveit_python
+```
+does not show:
+```bash
+cartesian_move
+Cause
+```
+Missing entry_points in setup.py.
+
+Solution
+
+Add:
+```bash
+entry_points={
+    'console_scripts': [
+        'cartesian_move = fr3_moveit_python.cartesian_move:main',
+    ],
+},
+```
+Rebuild:
+```bash
+colcon build --symlink-install
+```
+5. Launch File Not Installed
+Problem
+
+Running:
+```bash
+ros2 launch fr3_moveit_python cartesian_move.launch.py
+```
+returns:
+
+file not found
+Cause
+
+Launch file is not included in package installation.
+
+Solution
+
+Check setup.py:
+```bash
+data_files=[
+(
+'share/fr3_moveit_python/launch',
+[
+'launch/cartesian_move.launch.py'
+]
+)
+]
+```
+Rebuild:
+```bash
+colcon build --symlink-install
+```
+Verify:
+
+ls install/fr3_moveit_python/share/fr3_moveit_python/launch
+6. MoveIt Package Not Found
+Problem
+
+Error:
+
+Package 'franka_fr3_moveit_config' not found
+Cause
+
+Official Franka MoveIt package is not built or sourced.
+
+Solution
+
+Check:
+```bash
+ros2 pkg list | grep franka_fr3_moveit_config
+```
+Build:
+```bash
+colcon build \
+--packages-select franka_fr3_moveit_config
+```
+Source:
+
+source install/setup.bash
+7. Missing MoveItPy Dependency
+Problem
+
+Python error:
+
+ModuleNotFoundError:
+No module named moveit
+Cause
+
+MoveIt 2 Python interface is missing.
+
+Solution
+
+Install:
+```bash
+sudo apt install \
+ros-jazzy-moveit
+```
+Check:
+```bash
+ros2 pkg list | grep moveit
+```
+8. robot_description Not Loaded
+Problem
+
+MoveIt starts but cannot load robot model.
+
+Example:
+
+Robot model loading failed
+Cause
+
+Official Franka MoveIt configuration is not loaded correctly.
+
+Check:
+```bash
+ros2 param list | grep robot_description
+```
+Solution
+
+The launch file must load:
+
+.robot_description()
+
+from:
+
+franka_fr3_moveit_config
+9. robot_description_semantic Missing
+Problem
+
+Error:
+
+Planning group fr3_arm does not exist
+Cause
+
+SRDF is not loaded.
+
+Solution
+
+Ensure:
+
+.robot_description_semantic()
+
+is included.
+
+The SRDF defines:
+
+planning group
+end effector
+collision information
+10. Controller Manager Not Available
+Problem
+
+Error:
+
+Could not contact service:
+/controller_manager/list_controllers
+Cause
+
+Franka hardware interface is not running.
+
+Check:
+```bash
+ros2 node list
+```
+Expected:
+/fr3/controller_manager
+Solution
+
+Launch Franka hardware:
+
+ros2 launch franka_bringup ...
+11. Controller Not Active
+Problem
+
+Planning works but execution fails.
+
+Check:
+```bash
+ros2 control list_controllers
+```
+Expected:
+```bash
+fr3_arm_controller active
+joint_state_broadcaster active
+franka_robot_state_broadcaster active
+```
+Solution
+
+Activate controller:
+```bash
+ros2 control set_controller_state \
+fr3_arm_controller active
+```
+12. /joint_states Missing
+Problem
+
+MoveIt cannot plan.
+
+Check:
+```bash
+ros2 topic echo /joint_states
+```
+Cause
+
+Joint state broadcaster is not running.
+
+Solution
+
+Start:
+
+joint_state_broadcaster
+
+and verify:
+```bash
+ros2 topic list | grep joint
+```
+13. libfranka Connection Timeout
+Problem
+
+Error:
+```bash
+libfranka: Connection timeout
+Possible Causes
+Wrong robot IP
+Ethernet configuration incorrect
+Robot not connected
+FCI disabled
+```
+Check:
+ping <robot_ip>
+
+Example:
+```
+ping 192.168.0.1
+```
+PC should have:
+
+192.168.0.x
+14. Ethernet Configuration Problem
+Problem
+
+Robot cannot communicate with PC.
+
+Check network:
+```bash
+ip a
+```
+Find Ethernet interface:
+
+enp0s31f6
+
+Assign static IP if needed:
+
+Example:
+
+PC:
+192.168.0.10
+
+Robot:
+192.168.0.1
+15. MoveIt Planning Works but Execution Fails
+Problem
+
+Output:
+
+Planning successful
+Action client not connected
+Cause
+
+DDS discovery delay.
+
+Solution
+
+Add delay before execution:
+```bash
+time.sleep(5)
+
+moveit.execute()
+```
+
+16. Cartesian Motion Planning Failed (Moveit)
+Problem:
+```bash
+Cartesian path fraction = 0
+Possible Causes
+Target unreachable
+Wrong TCP link
+Collision
+Large displacement
+```
+Solution
+
+Test small movement:
+dz:=-0.005
+```bash
+ros2 launch fr3_moveit_python   cartesian_move.launch.py   dz:=-0.005   execute:=true
+```
+before:
+dz:=-0.05
+```bash
+ros2 launch fr3_moveit_python   cartesian_move.launch.py   dz:=-0.05   execute:=true
+```
+
+17. Wrong ROS 2 Distribution
+Problem: Compilation errors related to:
+```bash
+hardware_interface
+controller_manager
+```
+Cause:
+
+Package versions do not match ROS distribution.
+
+Required:
+```bash
+Ubuntu 24.04
+ROS 2 Jazzy
+Franka ROS 2 Jazzy branch
+```
+Check:
+```bash
+echo $ROS_DISTRO
+```
+Expected:
+
+jazzy
+
+18. Clean Rebuild After Configuration Changes
+
+When changing:
+```bash
+launch files
+setup.py
+package.xml
+MoveIt configuration
+```
+perform:
+```bash
+
+cd ~/franka_ros2_ws
+
+rm -rf build install log
+
+colcon build --symlink-install
+
+source install/setup.bash
+```
+Debug Checklist
+
+Before running:
+```bash
+ros2 launch fr3_moveit_python \
+cartesian_move.launch.py \
+dz:=-0.01 \
+execute:=true
+```
+Verify:
+```bash
+ ROS 2 Jazzy sourced
+ Workspace sourced
+ Package builds successfully
+ Franka MoveIt config available
+ Robot connected through Ethernet
+ FCI enabled
+ /joint_states publishing
+ Controllers active
+ MoveIt planning successful
+ Small Cartesian motion tested first
+```
