@@ -70,9 +70,7 @@ Rebuild:
 colcon build --symlink-install
 ```
 3. Python Package Structure Incorrect
-Problem
-
-ROS 2 cannot find the Python node.
+Problem: ROS 2 cannot find the Python node.
 
 Make sure:
 ```bash
@@ -139,13 +137,11 @@ colcon build --symlink-install
 Verify:
 
 ls install/fr3_moveit_python/share/fr3_moveit_python/launch
+
 6. MoveIt Package Not Found
-Problem
-
 Error:
-
 Package 'franka_fr3_moveit_config' not found
-Cause
+Cause:
 
 Official Franka MoveIt package is not built or sourced.
 
@@ -161,21 +157,18 @@ colcon build \
 --packages-select franka_fr3_moveit_config
 ```
 Source:
-
+```bash
 source install/setup.bash
+```
 7. Missing MoveItPy Dependency
-Problem
-
-Python error:
-
-ModuleNotFoundError:
-No module named moveit
-Cause
-
+Problem:
+- Python error:
+- ModuleNotFoundError:
+- No module named moveit
+Cause:
 MoveIt 2 Python interface is missing.
 
 Solution
-
 Install:
 ```bash
 sudo apt install \
@@ -190,11 +183,8 @@ Problem
 
 MoveIt starts but cannot load robot model.
 
-Example:
-
-Robot model loading failed
-Cause
-
+Example: Robot model loading failed
+Cause:
 Official Franka MoveIt configuration is not loaded correctly.
 
 Check:
@@ -202,59 +192,62 @@ Check:
 ros2 param list | grep robot_description
 ```
 Solution
-
+```bash
 The launch file must load:
 
 .robot_description()
+```
+from: franka_fr3_moveit_config
 
-from:
-
-franka_fr3_moveit_config
 9. robot_description_semantic Missing
 Problem
 
 Error:
+```bash
 
 Planning group fr3_arm does not exist
 Cause
-
+```
 SRDF is not loaded.
 
 Solution
-
+```bash
 Ensure:
 
 .robot_description_semantic()
-
+```
 is included.
 
 The SRDF defines:
-
+```bash
 planning group
 end effector
 collision information
+```
 10. Controller Manager Not Available
-Problem
+Problem:
 
 Error:
-
+```
 Could not contact service:
 /controller_manager/list_controllers
-Cause
-
-Franka hardware interface is not running.
+```
+Cause: Franka hardware interface is not running.
 
 Check:
 ```bash
 ros2 node list
 ```
 Expected:
+```bash
 /fr3/controller_manager
-Solution
+```
+Solution:
 
 Launch Franka hardware:
-
+```bash
 ros2 launch franka_bringup ...
+```
 11. Controller Not Active
 Problem
 
@@ -270,23 +263,19 @@ fr3_arm_controller active
 joint_state_broadcaster active
 franka_robot_state_broadcaster active
 ```
-Solution
+Solution: Activate controller
 
-Activate controller:
 ```bash
 ros2 control set_controller_state \
 fr3_arm_controller active
 ```
 12. /joint_states Missing
-Problem
-
-MoveIt cannot plan.
-
+Problem: MoveIt cannot plan.
 Check:
 ```bash
 ros2 topic echo /joint_states
 ```
-Cause
+Cause:
 
 Joint state broadcaster is not running.
 
@@ -302,8 +291,11 @@ ros2 topic list | grep joint
 ```
 13. libfranka Connection Timeout
 Problem
-
+```bash
+https://frankarobotics.github.io/docs/troubleshooting.html#running-a-libfranka-executable-fails-with-connection-timeout
+```
 Error:
+
 ```bash
 libfranka: Connection timeout
 Possible Causes
