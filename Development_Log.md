@@ -1,18 +1,18 @@
-# Development Log
+## Development Log
 
-## Project: Franka FR3 MoveIt Cartesian Motion Demo
+### Project: Franka FR3 MoveIt Cartesian Motion Demo
 
 This log records the main experiments, results, and technical decisions made while developing Cartesian motion control for the Franka FR3 using `franka_ros2` and MoveIt 2.
 
 ---
 
-# July 7 — Official Franka ROS 2 Controller Test
+### July 7 — Official Franka ROS 2 Controller Test
 
-## Goal
+### Goal
 
 Verify that the official `franka_ros2` package can communicate with the real FR3 hardware before writing any custom motion code.
 
-## Test
+### Test
 
 The official example controller was launched:
 
@@ -31,7 +31,7 @@ ros2 topic list | grep joint
 ros2 topic echo /fr3/joint_states --once
 ```
 
-## Observation
+### Observation
 
 The robot published joint states, and the controller manager was working.
 
@@ -47,7 +47,7 @@ Result:
 Unknown topic
 ```
 
-## Conclusion
+### Conclusion
 
 This is expected. The official `joint_position_example_controller` is mainly a demo/test controller.
 
@@ -59,20 +59,20 @@ ROS 2 Control → franka_hardware → libfranka → FCI → FR3
 
 but it is not intended for custom user-defined motion.
 
-## Decision
+### Decision
 
 Use the official controller only for system verification.
 Test a trajectory controller next for custom motion.
 
 ---
 
-# July 8 — Testing `joint_trajectory_controller`
+### July 8 — Testing `joint_trajectory_controller`
 
-## Goal
+### Goal
 
 Test whether a standard ROS 2 `JointTrajectoryController` can be used for custom joint-space motion.
 
-## Test
+### Test
 
 A `joint_trajectory_controller` was added to `controllers.yaml` and configured for the seven FR3 joints:
 
@@ -88,7 +88,7 @@ fr3_joint7
 
 The controller was launched through `franka_bringup`, and a `trajectory_msgs/msg/JointTrajectory` command was tested.
 
-## Observation
+### Observation
 
 The controller could be loaded, and the command interface could be checked with:
 
@@ -99,23 +99,23 @@ ros2 control list_controllers -c /fr3/controller_manager
 
 However, direct trajectory control was not the cleanest or most reliable approach for the final Cartesian motion target.
 
-## Conclusion
+### Conclusion
 
 A generic trajectory controller is useful for testing, but it is not the best final method for Cartesian motion on the FR3.
 
-## Decision
+### Decision
 
 Move to the official MoveIt-based pipeline instead of manually controlling trajectories.
 
 ---
 
-# July 9 — Choosing MoveIt as the Main Motion Layer
+### July 9 — Choosing MoveIt as the Main Motion Layer
 
-## Goal
+### Goal
 
 Find the proper software layer for point-to-point and Cartesian robot motion.
 
-## Reasoning
+### Reasoning
 
 A Cartesian command such as:
 
@@ -137,7 +137,7 @@ controller execution
 
 These are MoveIt responsibilities.
 
-## Test
+### Test
 
 MoveIt was tested with fake hardware first:
 
@@ -154,7 +154,7 @@ ros2 launch franka_fr3_moveit_config moveit.launch.py \
   use_fake_hardware:=false
 ```
 
-## Conclusion
+### Conclusion
 
 MoveIt is the correct layer for Cartesian motion.
 
@@ -174,19 +174,19 @@ libfranka / FCI
 FR3
 ```
 
-## Decision
+### Decision
 
 Use MoveIt and `moveit_py` for scripted Cartesian motion.
 
 ---
 
-# July 10 — Creating a Custom ROS 2 Python Package
+### July 10 — Creating a Custom ROS 2 Python Package
 
-## Goal
+### Goal
 
 Convert the temporary Cartesian MoveIt script into a proper ROS 2 Python package.
 
-## Reasoning
+### Reasoning
 
 A standalone Python script is not enough because MoveIt requires many parameters:
 
@@ -202,7 +202,7 @@ controller configuration
 
 These should be loaded through a launch file.
 
-## Result
+### Result
 
 A new ROS 2 Python package was created:
 
@@ -219,19 +219,19 @@ custom Cartesian motion logic
 official FR3 MoveIt configuration loading
 ```
 
-## Decision
+### Decision
 
 The package should reuse the official `franka_fr3_moveit_config` instead of redefining the robot model and controller setup manually.
 
 ---
 
-# July 11 — Inspecting Official Franka MoveIt Configuration
+### July 11 — Inspecting Official Franka MoveIt Configuration
 
-## Goal
+### Goal
 
 Understand what the official Franka MoveIt launch file loads and reuse the same configuration in the custom launch file.
 
-## Test
+### Test
 
 The official launch file was inspected:
 
@@ -248,7 +248,7 @@ grep -R -n \
 "$(ros2 pkg prefix franka_fr3_moveit_config)/share/franka_fr3_moveit_config/launch"
 ```
 
-## Finding
+### Finding
 
 MoveIt requires:
 
@@ -269,7 +269,7 @@ fr3_arm_controller
 
 This controller uses a trajectory interface connected to an effort-based hardware command interface.
 
-## Control Understanding
+### Control Understanding
 
 MoveIt does not send raw torque or raw effort commands.
 
@@ -291,13 +291,13 @@ FR3
 
 Therefore, the hardware command interface should not be commanded directly for Cartesian motion.
 
-## Conclusion
+### Conclusion
 
 The custom launch file should load the official FR3 MoveIt configuration and only add the custom Python Cartesian motion node.
 
 ---
 
-# Current Status
+### Current Status
 
 By July 11:
 
@@ -316,7 +316,7 @@ Cartesian MoveItPy node under development
 
 ---
 
-# Key Decisions
+### Key Decisions
 
 1. Use `joint_position_example_controller` only for official system verification.
 2. Do not use it for custom motion because it has no user command topic.
@@ -327,7 +327,7 @@ Cartesian MoveItPy node under development
 
 ---
 
-# Next Steps
+### Next Steps
 
 ```text
 Finalize cartesian_move.py
@@ -339,7 +339,7 @@ Add delay if MoveItPy action client connects too early
 Test small Cartesian motion first, e.g. dz:=-0.005
 ```
 
-# July 13 — Organize the github file 
+### July 13 — Organize the github file 
 
 Update:
 ```bash
