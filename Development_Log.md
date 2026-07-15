@@ -338,7 +338,7 @@ Verify FollowJointTrajectory action server
 Add delay if MoveItPy action client connects too early
 Test small Cartesian motion first, e.g. dz:=-0.005
 ```
-
+```
 ### July 13 — Organize the github file 
 
 Update:
@@ -349,4 +349,15 @@ setup.py
 correct README.md
 
 ```
+
+
+### July 14 — Add to existing package
+
+```bash
+cd ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python
+touch gripper_control.py
+touch pick_place.py
+```
+
+
 
