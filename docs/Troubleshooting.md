@@ -444,4 +444,26 @@ Verify:
  Controllers active
  MoveIt planning successful
  Small Cartesian motion tested first
+
+
+July 16th: 
+
+ros2 run fr3_moveit_python gripper_control
+:No executable found
+
+
+ros2 pkg executables fr3_moveit_python
+fr3_moveit_python cartesian_move
+
+Step 1: Check your setup.py
+
+Open:
+
+cd ~/franka_ros2_ws/src/fr3_moveit_python
+
+gedit setup.py
+
+
+
+
 ```
