@@ -360,30 +360,31 @@ touch pick_place.py
 setup.py
 
 entry_points={
-    "console_scripts": [
-        "cartesian_move = fr3_moveit_python.cartesian_move:main",
-
-        "gripper_control = fr3_moveit_python.gripper_control:main",
-
-        "pick_place = fr3_moveit_python.pick_place:main",
+    'console_scripts': [
+        'cartesian_move = fr3_moveit_python.cartesian_move:main',
+        'gripper_control = fr3_moveit_python.gripper_control:main',
     ],
 },
 
 
+
 ### July 15 — Explore Potential Extension Motion
 
+Ready state:
+
+Launch moveit:
+```bash
 ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=172.16.0.2
-
-
+```
 Gripper control file
 ```
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/gripper_control.py
 ```
-
 Setup
 ``bash
  nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
 ```
+Check state:
 
 1.Test the gripper 
 ```bash
