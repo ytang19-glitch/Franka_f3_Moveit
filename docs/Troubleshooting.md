@@ -552,7 +552,6 @@ Then:
 
 ros2 run fr3_moveit_python gripper_control
 
-``````````````````````````````````````
 
 
 ros2 action info /fr3_gripper/gripper_action
