@@ -372,6 +372,9 @@ entry_points={
 
 ### July 15 — Explore Potential Extension Motion
 
+ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=172.16.0.2
+
+
 Gripper control file
 ```
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/gripper_control.py
