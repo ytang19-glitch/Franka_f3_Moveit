@@ -167,6 +167,11 @@ cartesian_move.launch.py
 
 # 7. Run the package
 
+Run the official moveit file:
+```bash
+ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=172.16.0.2
+```
+
 Planning only:
 
 ```bash
