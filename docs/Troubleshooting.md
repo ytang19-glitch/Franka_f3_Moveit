@@ -449,6 +449,8 @@ Verify:
 
 July 16th: 
 
+Quesion:
+
 ros2 run fr3_moveit_python gripper_control
 :No executable found
 
@@ -464,7 +466,90 @@ cd ~/franka_ros2_ws/src/fr3_moveit_python
 
 gedit setup.py
 
+Step 1: Check your setup.py
 
+Open:
 
+cd ~/franka_ros2_ws/src/fr3_moveit_python
+
+gedit setup.py
+
+Find:
+
+entry_points={
+    'console_scripts': [
+        'cartesian_move = fr3_moveit_python.cartesian_move:main',
+    ],
+},
+
+Change it to:
+
+entry_points={
+    'console_scripts': [
+        'cartesian_move = fr3_moveit_python.cartesian_move:main',
+        'gripper_control = fr3_moveit_python.gripper_control:main',
+    ],
+},
+
+Save.
+
+Step 2: Verify file name
+
+Check:
+
+ls ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python
+
+You should see:
+
+__init__.py
+cartesian_move.py
+gripper_control.py
+
+Step 3: Rebuild only your package
+
+Go to workspace:
+
+cd ~/franka_ros2_ws
+
+Build:
+
+colcon build --packages-select fr3_moveit_python
+
+You should see:
+
+Finished <<< fr3_moveit_python
+
+Step 4: Source the new installation
+
+Important:
+
+source install/setup.bash
+
+or:
+
+source ~/franka_ros2_ws/install/setup.bash
+tep 5: Check again
+
+Run:
+
+ros2 pkg executables fr3_moveit_python
+
+Expected:
+
+fr3_moveit_python cartesian_move
+fr3_moveit_python gripper_control
+Step 6: Run your gripper
+
+Before running, check the action exists:
+
+ros2 action list | grep gripper
+
+Expected:
+
+/fr3_gripper/gripper_action
+
+Then:
+
+ros2 run fr3_moveit_python gripper_control
 
 ```
