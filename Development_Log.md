@@ -382,7 +382,6 @@ Setup
  nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
 ```
 
-
 1.Test the gripper 
 ```bash
 ros2 action info /fr3/fr3_gripper/gripper_action
