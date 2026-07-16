@@ -407,5 +407,8 @@ gedit ~/franka_ros2_ws/src/Franka_f3_Moveit/setup.py
 ```bash
 ros2 run fr3_moveit_python gripper_control
 ```
+Test gripper_control.py
+Details are shown in toublrshooting.md
+
 
 
