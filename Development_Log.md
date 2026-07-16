@@ -370,6 +370,8 @@ entry_points={
 
 ### July 15 — Explore Potential Extension Motion
 
+1.Run and test gripper_control.py
+
 Ready state:
 
 Launch moveit:
@@ -409,6 +411,8 @@ ros2 run fr3_moveit_python gripper_control
 ```
 Test gripper_control.py
 Details are shown in toublrshooting.md
+
+2.Edit and test pickandplace.py
 
 
 
