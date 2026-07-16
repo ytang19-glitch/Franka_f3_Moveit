@@ -376,12 +376,12 @@ Launch moveit:
 ```bash
 ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=172.16.0.2
 ```
-Gripper control file
+Edit Gripper control file
 ```
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/gripper_control.py
 ```
-Setup
-``bash
+Edit Setup file :
+```bash
  nano ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
 ```
 Check state:
@@ -390,19 +390,18 @@ Check state:
 ```bash
 ros2 action info /fr3/fr3_gripper/gripper_action
 ```
-2.Editing the gripper_control.py
-
-3. Rebuild the specific package created
+2. Rebuild the specific package created
 ```bash
 colcon build --packages-select fr3_moveit_python
 source install/setup.bash
 ```
-4.Vertify the integrality of setup file
+3.Vertify the integrality of setup file
 ```bash
 gedit ~/franka_ros2_ws/src/Franka_f3_Moveit/setup.py
 ```
-5.Try to make robot moved
+4.Try to make robot moved
+```bash
 ros2 run fr3_moveit_python gripper_control
-
+```
 
 
