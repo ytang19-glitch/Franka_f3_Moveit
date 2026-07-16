@@ -375,6 +375,10 @@ Ready state:
 Launch moveit:
 ```bash
 ros2 launch franka_fr3_moveit_config moveit.launch.py   robot_ip:=172.16.0.2
+
+ros2 launch franka_fr3_moveit_config moveit.launch.py \
+robot_ip:=172.16.0.2 \
+use_gripper:=true
 ```
 Edit Gripper control file
 ```
