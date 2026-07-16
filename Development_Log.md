@@ -357,7 +357,7 @@ touch gripper_control.py
 touch pick_place.py
 ```
 
-
+setup.py
 
 entry_points={
     "console_scripts": [
@@ -368,3 +368,15 @@ entry_points={
         "pick_place = fr3_moveit_python.pick_place:main",
     ],
 },
+
+
+### July 15 — Explore Potential Extension Motion
+
+1.Test the gripper 
+ros2 action info /fr3/fr3_gripper/gripper_action
+
+
+
+
+
+
