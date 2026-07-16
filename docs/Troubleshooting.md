@@ -552,4 +552,52 @@ Then:
 
 ros2 run fr3_moveit_python gripper_control
 
-```
+``````````````````````````````````````
+
+
+ros2 action info /fr3_gripper/gripper_action
+
+
+Expected to see:
+
+Action: franka_msgs/action/Grasp
+or:
+Action: franka_msgs/action/Move
+
+Actual:
+
+Action: /fr3_gripper/gripper_action
+Action clients: 1
+    /moveit_simple_controller_manager
+That means:
+
+/fr3_gripper/gripper_action exists in the ROS graph
+but nobody is actually providing the action server
+MoveIt is only acting as an action client
+
+Due to:
+ ros2 action info /franka_gripper/move
+Action: /franka_gripper/move
+Action clients: 0
+Action servers: 1
+    /franka_gripper
+yujietang@yujietang-System-Product-Name:~/franka_ros2_ws$ ros2 action info /franka_gripper/grasp
+Action: /franka_gripper/grasp
+Action clients: 0
+Action servers: 1
+    /franka_gripper
+yujietang@yujietang-System-Product-Name:~/franka_ros2_ws$ ros2 action info /franka_gripper/move
+Action: /franka_gripper/move
+Action clients: 0
+Action servers: 1
+    /franka_gripper
+
+THus
+ from control_msgs.action import GripperCommand >>>  from franka_msgs.action import Move
+
+
+
+
+
+
+
