@@ -631,6 +631,121 @@ but result only contains:
 
 bool success
 string error
+he important part:
+
+AttributeError: 'Move_Result' object has no attribute 'current_width'
+
+means your installed franka_msgs/action/Move does not contain current_width in the result message, even though your earlier:
+
+ros2 interface show franka_msgs/action/Move
+
+showed:
+
+float64 width
+float64 speed
+---
+bool success
+string error
+---
+float64 current_width
+
+In ROS 2 actions, the structure is:
+
+Goal
+---
+Result
+---
+Feedback
+
+The last section:
+
+float64 current_width
+
+is feedback, not result.
+
+Your code incorrectly does:
+
+result.current_width
+
+but result only contains:
+
+bool success
+string error
+Fix your code
+
+Replace:
+
+if result.success:
+
+    self.get_logger().info(
+        f"Gripper reached {result.current_width:.3f} m"
+    )
+
+with:
+
+if result.success:
+
+    self.get_logger().info(
+        "Gripper motion completed successfully."
+    )
+
+else:
+
+    self.get_logger().error(
+        result.error
+    )
+If you want to display current width
+
+You need to use feedback.
+
+Change:
+
+future = self.client.send_goal_async(goal)
+
+to:
+
+future = self.client.send_goal_async(
+    goal,
+    feedback_callback=self.feedback_callback
+)
+
+Add this function inside your class:
+
+def feedback_callback(self, feedback_msg):
+
+    feedback = feedback_msg.feedback
+
+    self.get_logger().info(
+        f"Current width: {feedback.current_width:.3f} m"
+    )
+
+Now you will see:
+
+Current width: 0.073 m
+Current width: 0.041 m
+Current width: 0.012 m
+
+during motion.
+
+Then rebuild
+cd ~/franka_ros2_ws
+
+colcon build --packages-select fr3_moveit_python
+
+source install/setup.bash
+
+Run:
+
+ros2 run fr3_moveit_python gripper_control
+
+Expected:
+
+[INFO] Connected to Franka gripper.
+[INFO] Gripper goal accepted
+[INFO] Gripper motion completed successfully.
+
+
+
 
 
 
