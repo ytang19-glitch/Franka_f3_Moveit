@@ -597,6 +597,44 @@ THus
 
 
 
+ros2 run fr3_moveit_python gripper_control
+AttributeError: 'Move_Result' object has no attribute 'current_width'
+[ros2run]: Process exited with failure 1
+
+In ROS 2 actions, the structure is:
+
+Goal
+---
+Result
+---
+Feedback
+
+
+```bash
+ros2 interface show franka_msgs/action/Move
+float64 width  # [m]
+float64 speed  # [m/s]
+---
+bool success
+string error
+---
+float64 current_width # [m]
+```
+
+float64 current_width is feedback, not result.
+
+
+e incorrectly does:
+
+result.current_width
+but result only contains:
+
+bool success
+string error
+
+
+
+
 
 
 
