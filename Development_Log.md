@@ -418,12 +418,13 @@ Details are shown in toublrshooting.md
 
 ### July 16 — Pick and place (test gripper)
 
+(1) Logic of pick and place
 First try: open
 logic:
 ```bash
 cartesian + gripper  close + cartesian + joint motion + cartesian + gripper release
 ```
-
+(2) 
 #### Original version (cartesian_move.py)
 
 Build the engine every time if we want to drive.
@@ -458,6 +459,7 @@ Open the new window:
 source /opt/ros/jazzy/setup.bash
 source ~/franka_ros2_ws/install/setup.bash
 ```
+(3) Debugging the hardware
 Debugging:
 ```bash
 ros2 run fr3_moveit_python gripper_control
