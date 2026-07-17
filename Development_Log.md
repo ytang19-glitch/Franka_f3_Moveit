@@ -416,7 +416,7 @@ Details are shown in toublrshooting.md
 
 
 
-### July 16 — Pick and place
+### July 16 — Pick and place (test gripper)
 
 First try: open
 logic:
@@ -458,6 +458,16 @@ Open the new window:
 source /opt/ros/jazzy/setup.bash
 source ~/franka_ros2_ws/install/setup.bash
 ```
+Debugging:
+```bash
+ros2 run fr3_moveit_python gripper_control
+```
 
+After close the gripper:
 
-
+```bash
+ros2 action send_goal \
+/franka_gripper/move \
+franka_msgs/action/Move \
+"{width: 0.00, speed: 0.05}"
+```
