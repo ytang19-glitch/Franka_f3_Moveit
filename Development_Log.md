@@ -473,3 +473,5 @@ ros2 action send_goal \
 franka_msgs/action/Move \
 "{width: 0.00, speed: 0.05}"
 ```
+(4) Purpose of main:
+ main() is basically the entry point that starts  robot application.
