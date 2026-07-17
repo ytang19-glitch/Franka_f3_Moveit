@@ -424,35 +424,35 @@ logic:
 ```bash
 cartesian + gripper  close + cartesian + joint motion + cartesian + gripper release
 ```
-(2) 
-#### Original version (cartesian_move.py)
+(2) Change cartesian_move.py
 
+Test cartesian_move.py
+```bash
+ros2 launch fr3_moveit_python \
+    cartesian_move.launch.py \
+    dz:=-0.05 \
+    execute:=true
+```    
+#### Original version (cartesian_move.py)
+```bash
+main()
+    |
+    ├── create MoveItPy
+    ├── get pose
+    ├── create target
+    ├── plan
+    ├── execute
+```
 Build the engine every time if we want to drive.
 ```bash
 Drive to school--Build engine--Install wheels--Install steering--Drive--Every trip repeats the same work.---Refactored version
 ```
-#### (cartesian_pickplace.py)
+#### Add new code:
  already have a car.
 ```bash
 Drive to school--Start engine--Drive
 ```
 The engine is reusable. motion.py is the engine.
-
-```bash
-fr3_moveit_python/
-│
-├── cartesian_move.py          # original demo (keep)
-│
-├── motion.py                  # new reusable MoveItPy class
-│
-├── cartesian_pickplace.py     # pick/place Cartesian interface
-│
-├── gripper_control.py
-│ (1) Standalone test mode → verify hardware/action server works.
-│ (2) Reusable library mode → use the same class inside pick_place.py.
-│
-└── pick_place.py              # final task
-```
 
 Open the new window:
 ```bash
@@ -478,6 +478,23 @@ main() is basically the entry point that starts  robot application.
 
 
 
+
+
+Structure of moveit_python:
+```bash
+fr3_moveit_python/
+│
+├── cartesian_move.py          # original demo (keep)
+│
+├── motion.py                  # new reusable MoveItPy class
+│
+├── cartesian_pickplace.py     # pick/place Cartesian interface
+│
+├── gripper_control.py
+│ (1) Standalone test mode → verify hardware/action server works.
+│ (2) Reusable library mode → use the same class inside pick_place.py.
+│
+└── pick_place.py              # final task
 
 
  
