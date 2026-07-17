@@ -415,14 +415,13 @@ Details are shown in toublrshooting.md
 2.Edit and test pickandplace.py
 
 ### July 16 — Pick and place
-
 First try: open
 logic:
 cartesian + gripper  close + cartesian + joint motion + cartesian + gripper release
 
 #### Original version (cartesian_move.py)
 
- build the engine every time if we want to drive.
+Build the engine every time if we want to drive.
 ```bash
 Drive to school--Build engine--Install wheels--Install steering--Drive--Every trip repeats the same work.---Refactored version
 ```
@@ -431,9 +430,21 @@ Drive to school--Build engine--Install wheels--Install steering--Drive--Every tr
 ```bash
 Drive to school--Start engine--Drive
 ```
-The engine is reusable.
+The engine is reusable. motion.py is the engine.
 
-motion.py is the engine.
-
-
-
+```bash
+fr3_moveit_python/
+│
+├── cartesian_move.py          # original demo (keep)
+│
+├── motion.py                  # new reusable MoveItPy class
+│
+├── cartesian_pickplace.py     # pick/place Cartesian interface
+│
+├── gripper_control.py         # your existing gripper
+│
+└── pick_place.py              # final task
+```
+gripper_control.py:
+(1) 
+(2) 
