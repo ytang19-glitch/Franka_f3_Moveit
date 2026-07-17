@@ -746,6 +746,48 @@ Expected:
 
 
 
+```bash
+import rclpy
+from rclpy.node import Node
+
+
+class RobotMotion(Node):
+
+    def __init__(self):
+        super().__init__("robot_motion")
+        print("Robot node started")
+
+
+def main():
+
+    rclpy.init()
+
+    robot = RobotMotion()
+
+    rclpy.spin(robot)
+
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()
+```
+```bash
+Python file
+│
+├── import libraries
+│
+├── define classes
+│       |
+│       └── RobotMotion
+│
+└── main()
+        |
+        ├── initialize ROS2
+        ├── create robot node
+        ├── run robot
+        └── shutdown
+```
 
 
 
