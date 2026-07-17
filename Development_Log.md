@@ -414,10 +414,14 @@ Details are shown in toublrshooting.md
 
 2.Edit and test pickandplace.py
 
+
+
 ### July 16 — Pick and place
 First try: open
 logic:
+```bash
 cartesian + gripper  close + cartesian + joint motion + cartesian + gripper release
+```
 
 #### Original version (cartesian_move.py)
 
@@ -446,5 +450,6 @@ fr3_moveit_python/
 └── pick_place.py              # final task
 ```
 gripper_control.py:
-(1) 
-(2) 
+(1) Standalone test mode → verify hardware/action server works.
+(2) Reusable library mode → use the same class inside pick_place.py.
+
