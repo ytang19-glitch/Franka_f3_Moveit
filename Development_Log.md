@@ -417,6 +417,7 @@ Details are shown in toublrshooting.md
 
 
 ### July 16 — Pick and place
+
 First try: open
 logic:
 ```bash
@@ -445,20 +446,16 @@ fr3_moveit_python/
 │
 ├── cartesian_pickplace.py     # pick/place Cartesian interface
 │
-├── gripper_control.py         # your existing gripper
+├── gripper_control.py
+│ (1) Standalone test mode → verify hardware/action server works.
+│ (2) Reusable library mode → use the same class inside pick_place.py.
 │
 └── pick_place.py              # final task
 ```
-gripper_control.py:
-(1) Standalone test mode → verify hardware/action server works.
-(2) Reusable library mode → use the same class inside pick_place.py.
 
 Open the new window:
 ```bash
 source /opt/ros/jazzy/setup.bash
-
-source ~/franka_ros2_ws/install/setup.bash
-
 source ~/franka_ros2_ws/install/setup.bash
 ```
 
