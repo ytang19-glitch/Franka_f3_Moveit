@@ -453,3 +453,14 @@ gripper_control.py:
 (1) Standalone test mode → verify hardware/action server works.
 (2) Reusable library mode → use the same class inside pick_place.py.
 
+Open the new window:
+```bash
+source /opt/ros/jazzy/setup.bash
+
+source ~/franka_ros2_ws/install/setup.bash
+
+source ~/franka_ros2_ws/install/setup.bash
+```
+
+
+
