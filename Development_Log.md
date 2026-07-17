@@ -424,20 +424,13 @@ Details are shown in toublrshooting.md
 
 ### July 16 — Pick and place (test gripper)
 
-(1) Logic of pick and place
+#### (1) Logic of pick and place
 First try: open
 logic:
 ```bash
 cartesian + gripper  close + cartesian + joint motion + cartesian + gripper release
 ```
-(2) Change cartesian_move.py
-
-Test cartesian_move.py
-```bash
-ros2 launch fr3_moveit_python \
-    cartesian_move.launch.py \
-    dz:=-0.05 \
-    execute:=true
+#### (2) Change cartesian_move.py
 ```    
 #### Original version (cartesian_move.py)
 ```bash
@@ -449,6 +442,21 @@ main()
     ├── plan
     ├── execute
 ```
+#### New version (cartesian_move.py)
+
+Standalone:
+
+```bash
+ros2 launch fr3_moveit_python \
+    cartesian_move.launch.py \
+    dz:=-0.05 \
+    execute:=true
+```
+Reusable:
+```bash
+motion.move_down(0.10)
+```
+
 Build the engine every time if we want to drive.
 ```bash
 Drive to school--Build engine--Install wheels--Install steering--Drive--Every trip repeats the same work.---Refactored version
@@ -460,7 +468,9 @@ Drive to school--Start engine--Drive
 ```
 The engine is reusable. motion.py is the engine.
 
-(3) Debugging the hardware
+
+
+#### (3) Debugging the hardware
 Debugging:
 ```bash
 ros2 run fr3_moveit_python gripper_control
@@ -478,8 +488,7 @@ franka_msgs/action/Move \
 main() is basically the entry point that starts  robot application.
 
 
-
-Structure of moveit_python:
+#### Structure of moveit_python:
 ```bash
 fr3_moveit_python/
 │
