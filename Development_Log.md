@@ -416,4 +416,25 @@ Details are shown in toublrshooting.md
 
 ### July 16 — Pick and place
 
+First try: open
+logic:
+cartesian + gripper  close + cartesian + joint motion + cartesian + gripper release
+
+#### Original version (cartesian_move.py)
+
+ build the engine every time if we want to drive.
+```bash
+Drive to school--Build engine--Install wheels--Install steering--Drive--Every trip repeats the same work.---Refactored version
+```
+#### (cartesian_pickplace.py)
+ already have a car.
+```bash
+Drive to school--Start engine--Drive
+```
+The engine is reusable.
+
+motion.py is the engine.
+
+
+
 
