@@ -368,7 +368,7 @@ entry_points={
 
 
 
-### July 15 — Explore Potential Extension Motion
+### July 15 — Explore Potential Extension Motion ( gripper control)
 
 1.Run and test gripper_control.py
 
@@ -414,5 +414,6 @@ Details are shown in toublrshooting.md
 
 2.Edit and test pickandplace.py
 
+### July 16 — Pick and place
 
 
