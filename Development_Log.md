@@ -6,6 +6,12 @@ This log records the main experiments, results, and technical decisions made whi
 
 ---
 
+Open a new window:
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/franka_ros2_ws/install/setup.bash
+```
+
 ### July 7 — Official Franka ROS 2 Controller Test
 
 ### Goal
@@ -454,11 +460,6 @@ Drive to school--Start engine--Drive
 ```
 The engine is reusable. motion.py is the engine.
 
-Open the new window:
-```bash
-source /opt/ros/jazzy/setup.bash
-source ~/franka_ros2_ws/install/setup.bash
-```
 (3) Debugging the hardware
 Debugging:
 ```bash
@@ -475,8 +476,6 @@ franka_msgs/action/Move \
 ```
 (4) Purpose of main:
 main() is basically the entry point that starts  robot application.
-
-
 
 
 
