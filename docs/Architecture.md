@@ -1,4 +1,14 @@
-## Cartesian motion
+## FR3 MoveIt Cartesian Motion & Pick-and-Place Architecture
+### Purpose
+
+This project demonstrates how to use MoveIt 2 + ROS 2 to control the Franka FR3 robot for Cartesian motion and pick-and-place tasks.
+
+MoveIt Cartesian planning has limitations because it requires finding valid joint solutions along a Cartesian path. For simple motions (e.g., moving only along one axis such as Z direction), Cartesian interpolation is feasible, but complex trajectories may require additional planning methods such as OMPL.
+
+---
+
+## Software Architecture
+## Cartesian Motion Pipeline
 ### Purpose
 
 Explain the entire software architecture.
@@ -37,7 +47,9 @@ Franka Hardware
     FR3
 ```
 
-### pick and place
+---
+### Pick-and-Place Architecture
+The arm motion and gripper control are independent systems. MoveIt handles arm trajectory planning, while the Franka gripper uses its own action interface
 
 ```bash
 
@@ -62,10 +74,11 @@ Franka Hardware
 
        FR3 Robot
 ```
+---
 
+## The structure of 3_moveit_python and purpose of each file
 
-The structure of 3_moveit_python and purpose of each file
-
+```bash
 fr3_moveit_python/
 │
 ├── cartesian_move.py
@@ -173,10 +186,28 @@ fr3_moveit_python/
     │
     └── cartesian_move.launch.py
         # Launch MoveIt + run Cartesian demo
+```
 
+---
 
+## Design Concept
 
+The project follows a layered architecture:
 
+```bash
+Application Layer
+        |
+        v
+Motion Library
+        |
+        v
+MoveIt 2 Interface
+        |
+        v
+ROS2 Controllers
+        |
+        v
+Robot Hardware
 
 ```
 
