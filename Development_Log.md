@@ -484,8 +484,19 @@ ros2 action send_goal \
 franka_msgs/action/Move \
 "{width: 0.00, speed: 0.05}"
 ```
-(4) Purpose of main:
+(4) Simplifuy cartesian_move.py
+
 main() is basically the entry point that starts  robot application.
+For reusage of cartesian_move.py
+Delete:
+```bash
+def flush_and_exit(exit_code: int) -> None:
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    # Avoid the MoveItPy / MoveItCpp destructor crash seen on this Jazzy setup.
+    os._exit(exit_code)
+```
 
 
 #### Structure of moveit_python:
