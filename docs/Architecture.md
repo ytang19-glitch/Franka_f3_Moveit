@@ -105,11 +105,7 @@ fr3_moveit_python/
 │   # - pick_place.py
 │
 │
-├── cartesian_pickplace.py
-│   # Cartesian pick/place motion interface
-│   # Purpose:
-│   # - Combine multiple Cartesian motions
-│   #
+├── cartesian_py
 │   # Example sequence:
 │   # 1. Move above object
 │   # 2. Move down
