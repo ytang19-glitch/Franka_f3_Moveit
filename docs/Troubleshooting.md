@@ -789,142 +789,122 @@ Python file
         └── shutdown
 ```
 
-## July 19th: 'GripperController' object has no attribute 'open_gripper'
-Reason:
-The structure of gripper_control.py
+---
 
+
+### July 19th — Troubleshooting Log
+
+### Issue:
+'GripperController' object has no attribute 'open_gripper'
+
+### Symptom:
+
+Running pick-place related code produced:
+
+AttributeError:
+
+'GripperController' object has no attribute 'open_gripper'
+
+However, the function existed in the source file.
+
+
+### Investigation:
+### Step 1: Check installed package version
+
+Command:
 ```bash
 grep -n "open_gripper" \
 ~/franka_ros2_ws/install/fr3_moveit_python/lib/python3.12/site-packages/fr3_moveit_python/gripper_control.py
 ```
+
+Output:
+```bash
 110:    def open_gripper(self):
 142:    gripper.open_gripper()
+```
 
+### Step 2: Compare source workspace
+
+Command:
 ```bash
 grep -n "def open_gripper" \
 ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/gripper_control.py
 ```
-110:    def open_gripper(self):
+Output:
 
+110:    def open_gripper:
 
-(1) Mixed workspace / wrong environment
+Conclusion:
 
-Problem:
-After modifying gripper_control.py, ROS still uses old code or wrong workspace.
-
-Check:
+The function existed in both:
 ```bash
-cd ~/franka_ros2_ws
-rm -rf build install log
-colcon build --symlink-install
-source install/setup.bash
+src/      and       install/
 ```
+Therefore, the issue was not missing code.
 
-Possible reason:
-- Multiple ROS workspaces exist.
-- Terminal sourced another workspace before ~/franka_ros2_ws.
-- ROS is running an old installed version of gripper_control.py.
-- Forgot to source after rebuilding.
+### Root Cause Analysis
 
-Verify:
+### Cause 1: Mixed workspace / wrong environment
+
+Possible reasons:
+```bash
+- Multiple ROS2 workspaces exist.
+- Terminal sourced another workspace.
+- ROS executed an old installed package.
+- Workspace was not sourced after rebuilding.
+```
+Verification:
+
 ```bash
 ros2 pkg prefix fr3_moveit_python
 ros2 pkg executables fr3_moveit_python
-```
 which python3
-```bash
 echo $PYTHONPATH
 ```
-
-(2) Wrong structure of gripper_control.py
-
-Problem:
-Original gripper_control.py works, but after changing structure, gripper cannot open.
-
-Possible reason:
-- Changed from standalone ROS2 node into a reusable class.
-- Removed or changed main() entry point.
-- setup.py still points to old function.
-
-Example:
-
-setup.py:
+Send message:
 ```bash
-'gripper_control = fr3_moveit_python.gripper_control:main'
+ros2 action send_goal \
+/franka_gripper/move \
+franka_msgs/action/Move \
+"{width: 0.00, speed: 0.05}"
 ```
+Result: Action server confirmed working.
 
-Requires:
-
-def main():
-    rclpy.init()
-    node = GripperControl()
-    rclpy.spin(node)
-
-
-
-(3) Wrong ROS2 action interface
-
-Problem:
-The node starts but gripper does not move.
-
-Possible reason:
-- Changed action name.
-- Changed action type.
-- Used wrong namespace.
-
-Check:
-
+Final Debugging Procedure
+1. Verify hardware interface
+```bash
 ros2 action list
-
-Expected:
-
-/franka_gripper/move
-/franka_gripper/grasp
-/fr3_gripper/gripper_action
-
-
-Test:
-
+```
+3. Test official gripper command
+```bash
 ros2 action send_goal \
 /franka_gripper/move \
 franka_msgs/action/Move \
 "{width: 0.00, speed: 0.05}"
-
-
-
-### Final debugging order:
-
-1. Check action server:
-
-ros2 action list
-
-
-2. Test official command:
-
-ros2 action send_goal \
-/franka_gripper/move \
-franka_msgs/action/Move \
-"{width: 0.00, speed: 0.05}"
-
-
-3. Check ROS sees your package:
-
+```
+5. Verify package location
+```bash
+ros2 pkg prefix fr3_moveit_python
+```
+7. Verify executable registration
+```bash
 ros2 pkg executables fr3_moveit_python
-
-
-4. Check your entry point:
-
-cat setup.py
-
-
-5. Rebuild:
-
+```
+9. Check Python entry point
+```bash
+cat setup.py ( franka_ros2_ws/fr3_moveit_python/setup.py
+```
+Confirm:
+```bash
+gripper_control =
+fr3_moveit_python.gripper_control:main
+```
+6. Rebuild workspace
+```bash
 colcon build --symlink-install
-
 source install/setup.bash
-
-
-6. Run:
-
+```
+7. Run test node
+```bash
 ros2 run fr3_moveit_python gripper_control
-
+```
