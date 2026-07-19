@@ -420,7 +420,7 @@ Details are shown in toublrshooting.md
 
 2.Edit and test pickandplace.py
 
-
+---
 
 ### July 16 — Pick and place (test gripper)
 
@@ -515,8 +515,7 @@ fr3_moveit_python/
 │
 └── pick_place.py              # final task
 ```
-
-
+---
 
 ### July 20 — Pick and Place Development Log
 
