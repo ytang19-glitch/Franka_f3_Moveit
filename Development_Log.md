@@ -519,94 +519,118 @@ fr3_moveit_python/
 ### July 20 — Pick and place (test gripper)
 ### Debugging and test code 
 
-(1) Mixed workspace / wrong environment
+### July 20 — Pick and Place Development Log
 
-Problem:
-After modifying gripper_control.py, ROS still uses old code or wrong workspace.
+## Goal:
+Develop a reusable Franka FR3 pick-and-place framework based on MoveItPy and ROS2.
 
-Check:
+The system is divided into:
 
-cd ~/franka_ros2_ws
+fr3_moveit_python/
 
-rm -rf build install log
-
-colcon build --symlink-install
-
-source install/setup.bash
-
-
-Possible reason:
-- Multiple ROS workspaces exist.
-- Terminal sourced another workspace before ~/franka_ros2_ws.
-- ROS is running an old installed version of gripper_control.py.
-- Forgot to source after rebuilding.
-
-
-Verify:
-
-ros2 pkg prefix fr3_moveit_python
-
-ros2 pkg executables fr3_moveit_python
-
-which python3
-
-echo $PYTHONPATH
+├── motion.py
+│   MoveItPy motion controller
+│
+├── gripper_control.py
+│   Standalone gripper hardware test
+│
+├── gripper.py
+│   Reusable gripper interface
+│
+├── cartesian_move.py
+│   Cartesian motion demo
+│
+├── cartesian_pickplace.py
+│   Cartesian pick and place motion
+│
+└── pick_place.py
+    Complete pick-and-place application
 
 
 
-(2) Wrong structure of gripper_control.py
+## Step 1: Gripper Hardware Verification
 
-Problem:
-Original gripper_control.py works, but after changing structure, gripper cannot open.
+Purpose:
+Verify Franka gripper action interface before integrating with pick-and-place.
 
-Possible reason:
-- Changed from standalone ROS2 node into a reusable class.
-- Removed or changed main() entry point.
-- setup.py still points to old function.
+Test command:
 
-Example:
-
-setup.py:
-
-'gripper_control = fr3_moveit_python.gripper_control:main'
+ros2 run fr3_moveit_python gripper_control
 
 
-Requires:
-
-def main():
-    rclpy.init()
-    node = GripperControl()
-    rclpy.spin(node)
-
-
-
-(3) Wrong ROS2 action interface
-
-Problem:
-The node starts but gripper does not move.
-
-Possible reason:
-- Changed action name.
-- Changed action type.
-- Used wrong namespace.
-
-Check:
-
-ros2 action list
-
-Expected:
-
-/franka_gripper/move
-/franka_gripper/grasp
-/fr3_gripper/gripper_action
-
-
-Test:
+Official action test:
 
 ros2 action send_goal \
 /franka_gripper/move \
 franka_msgs/action/Move \
 "{width: 0.00, speed: 0.05}"
+
+
+Result:
+- Confirmed gripper action server works.
+- Hardware communication is functional.
+
+
+
+## Step 2: Separate Test Node and Reusable Library
+
+Original design:
+
+gripper_control.py
+
+Responsibilities:
+- Create ROS2 node
+- Create ActionClient
+- Send gripper commands
+
+
+New design:
+
+gripper_control.py
+    |
+    |-- hardware test only
+
+
+gripper.py
+    |
+    |-- reusable gripper class
+    |-- used by pick_place.py
+
+
+
+Reason:
+Avoid mixing ROS2 executable nodes with reusable Python components.
+
+
+
+## Step 3: Integrate with Pick and Place
+
+Final architecture:
+
+pick_place.py
+
+        |
+        |
+        +----------------+
+        |                |
+        v                v
+
+ motion.py        gripper.py
+
+ MoveItPy          Franka
+ controller        gripper interface
+
+
+Workflow:
+
+1. Move robot to pre-grasp position
+2. Cartesian approach
+3. Close gripper
+4. Lift object
+5. Move to place position
+6. Open gripper
+
+
 
 
 
