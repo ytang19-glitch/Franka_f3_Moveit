@@ -516,37 +516,13 @@ fr3_moveit_python/
 └── pick_place.py              # final task
 ```
 
-### July 20 — Pick and place (test gripper)
-### Debugging and test code 
+
 
 ### July 20 — Pick and Place Development Log
 
-## Goal:
+### Previous Goal:
 Develop a reusable Franka FR3 pick-and-place framework based on MoveItPy and ROS2.
-
-The system is divided into:
-
-fr3_moveit_python/
-
-├── motion.py
-│   MoveItPy motion controller
-│
-├── gripper_control.py
-│   Standalone gripper hardware test
-│
-├── gripper.py
-│   Reusable gripper interface
-│
-├── cartesian_move.py
-│   Cartesian motion demo
-│
-├── cartesian_pickplace.py
-│   Cartesian pick and place motion
-│
-└── pick_place.py
-    Complete pick-and-place application
-
-
+#### Current stage: Debugging and test code 
 
 ## Step 1: Gripper Hardware Verification
 
@@ -554,81 +530,9 @@ Purpose:
 Verify Franka gripper action interface before integrating with pick-and-place.
 
 Test command:
-
+```bash
 ros2 run fr3_moveit_python gripper_control
-
-
-Official action test:
-
-ros2 action send_goal \
-/franka_gripper/move \
-franka_msgs/action/Move \
-"{width: 0.00, speed: 0.05}"
-
-
-Result:
-- Confirmed gripper action server works.
-- Hardware communication is functional.
-
-
-
-## Step 2: Separate Test Node and Reusable Library
-
-Original design:
-
-gripper_control.py
-
-Responsibilities:
-- Create ROS2 node
-- Create ActionClient
-- Send gripper commands
-
-
-New design:
-
-gripper_control.py
-    |
-    |-- hardware test only
-
-
-gripper.py
-    |
-    |-- reusable gripper class
-    |-- used by pick_place.py
-
-
-
-Reason:
-Avoid mixing ROS2 executable nodes with reusable Python components.
-
-
-
-## Step 3: Integrate with Pick and Place
-
-Final architecture:
-
-pick_place.py
-
-        |
-        |
-        +----------------+
-        |                |
-        v                v
-
- motion.py        gripper.py
-
- MoveItPy          Franka
- controller        gripper interface
-
-
-Workflow:
-
-1. Move robot to pre-grasp position
-2. Cartesian approach
-3. Close gripper
-4. Lift object
-5. Move to place position
-6. Open gripper
+```
 
 
 
