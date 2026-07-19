@@ -514,6 +514,6 @@ fr3_moveit_python/
 │ (2) Reusable library mode → use the same class inside pick_place.py.
 │
 └── pick_place.py              # final task
-
+```
 ### July 20 — Pick and place (test gripper)
-
+### Debugging and test code 
