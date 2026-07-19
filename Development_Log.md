@@ -515,5 +515,5 @@ fr3_moveit_python/
 │
 └── pick_place.py              # final task
 
+### July 20 — Pick and place (test gripper)
 
- 
