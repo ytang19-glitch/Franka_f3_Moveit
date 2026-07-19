@@ -524,7 +524,7 @@ fr3_moveit_python/
 Develop a reusable Franka FR3 pick-and-place framework based on MoveItPy and ROS2.
 #### Current stage: Debugging and test code 
 
-## Step 1: Gripper Hardware Verification
+### Step 1: Gripper Hardware Verification
 
 Purpose:
 Verify Franka gripper action interface before integrating with pick-and-place.
@@ -533,8 +533,13 @@ Test command:
 ```bash
 ros2 run fr3_moveit_python gripper_control
 ```
-
-
-
+Final result from Troubleshooting.md:
+```bash
+- ROS2 Python packages execute code from the install space, not directly from src.
+- After changing package structure, rebuild and source the workspace.
+- Standalone ROS2 nodes and reusable Python classes should be separated.
+- Always verify hardware interfaces before debugging application-level code.
+- setup.py entry points must match the actual Python architecture.
+```
 
 
