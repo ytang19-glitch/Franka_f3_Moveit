@@ -789,9 +789,22 @@ Python file
         └── shutdown
 ```
 
+## July 19th: 'GripperController' object has no attribute 'open_gripper'
+Reason:
+The structure of gripper_control.py
 
+```bash
+grep -n "open_gripper" \
+~/franka_ros2_ws/install/fr3_moveit_python/lib/python3.12/site-packages/fr3_moveit_python/gripper_control.py
+```
+110:    def open_gripper(self):
+142:    gripper.open_gripper()
 
-
+```bash
+grep -n "def open_gripper" \
+~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/gripper_control.py
+```
+110:    def open_gripper(self):
 
 
 
