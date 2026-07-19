@@ -806,7 +806,93 @@ grep -n "def open_gripper" \
 ```
 110:    def open_gripper(self):
 
-Final debugging order:
+
+(1) Mixed workspace / wrong environment
+
+Problem:
+After modifying gripper_control.py, ROS still uses old code or wrong workspace.
+
+Check:
+```bash
+cd ~/franka_ros2_ws
+rm -rf build install log
+colcon build --symlink-install
+source install/setup.bash
+```
+
+Possible reason:
+- Multiple ROS workspaces exist.
+- Terminal sourced another workspace before ~/franka_ros2_ws.
+- ROS is running an old installed version of gripper_control.py.
+- Forgot to source after rebuilding.
+
+Verify:
+```bash
+ros2 pkg prefix fr3_moveit_python
+ros2 pkg executables fr3_moveit_python
+```
+which python3
+```bash
+echo $PYTHONPATH
+```
+
+(2) Wrong structure of gripper_control.py
+
+Problem:
+Original gripper_control.py works, but after changing structure, gripper cannot open.
+
+Possible reason:
+- Changed from standalone ROS2 node into a reusable class.
+- Removed or changed main() entry point.
+- setup.py still points to old function.
+
+Example:
+
+setup.py:
+```bash
+'gripper_control = fr3_moveit_python.gripper_control:main'
+```
+
+Requires:
+
+def main():
+    rclpy.init()
+    node = GripperControl()
+    rclpy.spin(node)
+
+
+
+(3) Wrong ROS2 action interface
+
+Problem:
+The node starts but gripper does not move.
+
+Possible reason:
+- Changed action name.
+- Changed action type.
+- Used wrong namespace.
+
+Check:
+
+ros2 action list
+
+Expected:
+
+/franka_gripper/move
+/franka_gripper/grasp
+/fr3_gripper/gripper_action
+
+
+Test:
+
+ros2 action send_goal \
+/franka_gripper/move \
+franka_msgs/action/Move \
+"{width: 0.00, speed: 0.05}"
+
+
+
+### Final debugging order:
 
 1. Check action server:
 
