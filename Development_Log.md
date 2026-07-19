@@ -540,5 +540,47 @@ Final result from Troubleshooting.md:
 - Always verify hardware interfaces before debugging application-level code.
 - setup.py entry points must match the actual Python architecture.
 ```
+### Step 2: Check motion.py
+
+Purpose:
+
+`motion.py` is the robot arm motion abstraction layer.
+Its responsibility is to hide the complexity of MoveItPy, planning scene, IK, and trajectory execution.
+
+It provides simple motion APIs for higher-level tasks.
+
+```python
+arm.move_to_pose(target_pose)
+arm.move_relative(
+    dx=0,
+    dy=0,
+    dz=-0.05
+
+Rebuild packages after changes of python file
+```bash
+colcon build \
+--packages-select fr3_moveit_python \
+--symlink-install
+```
+
+### Step 3: Check motion.py
+
+Purpose:
+motion.py is a low-level robot arm controller.
+pick_place.py should not contain MoveItPy details. It should only describe the task sequence:
+
+...bash
+1. gripper_control.py
+        |
+        | verify hardware
+
+2. motion.py
+        |
+        | verify arm motion
+
+3. pick_place.py
+        |
+        | combine both
+```
 
 
