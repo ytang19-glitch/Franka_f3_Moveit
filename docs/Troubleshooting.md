@@ -806,5 +806,39 @@ grep -n "def open_gripper" \
 ```
 110:    def open_gripper(self):
 
+Final debugging order:
 
+1. Check action server:
+
+ros2 action list
+
+
+2. Test official command:
+
+ros2 action send_goal \
+/franka_gripper/move \
+franka_msgs/action/Move \
+"{width: 0.00, speed: 0.05}"
+
+
+3. Check ROS sees your package:
+
+ros2 pkg executables fr3_moveit_python
+
+
+4. Check your entry point:
+
+cat setup.py
+
+
+5. Rebuild:
+
+colcon build --symlink-install
+
+source install/setup.bash
+
+
+6. Run:
+
+ros2 run fr3_moveit_python gripper_control
 
