@@ -909,15 +909,43 @@ source install/setup.bash
 ros2 run fr3_moveit_python gripper_control
 ```
 
-
 ---
 
+
+Question:
 Could not find parameter robot_description_semantic
 
  moveit = MoveItPy(
 [pick_place-1] RuntimeError: Unable to configure planning scene monitor)
 
+Cause:
+the wrong way for moveit.py
 
+Example: 
+
+```bash
+import rclpy
+from moveit.planning import MoveItPy
+
+# Initialize ROS 2
+rclpy.init()
+
+# Instantiate MoveItPy for the current ROS 2 node/context
+moveit_py = MoveItPy(node_name="moveit_py_example")
+
+# Get the planning component for a pre-defined manipulator arm (e.g., "panda_arm")
+panda_arm = moveit_py.get_planning_component("panda_arm")
+
+# Plan to a joint space goal
+panda_arm.set_goal_state(configuration_name="ready")
+plan_result = panda_arm.plan()
+
+# Execute the planned trajectory if planning was successful
+if plan_result:
+    moveit_py.execute(plan_result.trajectory)
+
+rclpy.shutdown()
+```
 
 
 
