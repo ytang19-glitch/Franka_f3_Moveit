@@ -1109,4 +1109,105 @@ start_state_max_bounds_error
 
 [pick_place-1]              ^^^^^^^^^
 [pick_place-1] RuntimeError: Planning plugin name is empty or not defined in namespace 'ompl'. Please choose one of the available plugins: chomp_interface/CHOMPPlanner, ompl_interface/OMPLPlanner, pilz_industrial_motion_planner/CommandPlanner, stomp_moveit/StompPlanner
-[ERROR] [pick_place-1]: process has died [pid 302967, exit code 1, cmd '/home/yujietang/franka_ros2_ws/install/fr3_moveit_python/lib/fr3_moveit_python/pick_place --ros-args -r __node:=fr3_pick_place --params-file /tmp/launch_params_xk_e5s15 --params-file /tmp/launch_params_k9f5fi1k --params-file /tmp/launch_params_bge8w9x2 --params-file /tmp/launch_params_45722bpo --params-file /tmp/launch_params_5a6f14d3 --params-file /tmp/launch_params_lp3hfgq4 --params-file /tmp/launch_params_jjaydkym'].
+[ERROR] [pick_place-1]: process has died [pid 302967, exit code 1, cmd '/home/yujietang/franka_ros2_ws/install/fr3_moveit_python/lib/fr3_moveit_python/pick_place --ros-args -r __node:=fr3_pick_place --params-file /tmp/launch_params_xk_e5s15 --params-file /tmp/launch_params_k9f5fi1k --params-file /tmp/launch_params_bge8w9x2 --params-file /tmp/launch_params_45722bpo --params-file /tmp/launch_params_5a6f14d3 --params-file /tmp/launch_params_lp3hfgq4 --params-file /tmp/launch_params_jjaydkym'].1. OMPL Planner 正常加载
+
+你的之前错误：
+
+Planning plugin name is empty
+
+已经解决。
+
+现在：
+
+Calling Planner 'OMPL'
+
+说明：
+
+"planning_plugins": [
+    "ompl_interface/OMPLPlanner"
+]
+
+已经生效。
+
+2. IK + Planning 成功
+
+这里：
+
+Planner configuration 'fr3_arm' will use planner 'geometric::RRTConnect'
+
+说明：
+
+你的 group:
+
+PLANNING_GROUP = "fr3_arm"
+
+成功找到。
+
+MoveIt 使用：
+
+RRTConnect
+
+进行路径规划。
+
+3. Controller 找到了
+
+关键：
+
+Returned 2 controllers in list
+
+说明你的：
+
+fr3_controllers.yaml
+
+加载成功。
+
+MoveIt 找到了：
+
+例如：
+
+fr3_arm_controller
+fr3_gripper
+4. 轨迹发送成功
+
+最重要：
+
+sending trajectory to fr3_arm_controller
+
+↓
+
+Goal request accepted!
+
+↓
+
+Controller 'fr3_arm_controller' successfully finished
+
+↓
+
+Completed trajectory execution with status SUCCEEDED
+
+这代表：
+
+MoveIt
+↓
+ROS2 action
+↓
+ros2_control
+↓
+Franka controller
+
+全部正常。
+
+现在你的项目状态
+
+你已经完成：
+
+✅ FR3 hardware connection
+✅ Franka FCI
+✅ ROS2 Jazzy
+✅ MoveIt2 configuration
+✅ MoveItPy API
+✅ OMPL planning
+✅ Joint trajectory execution
+✅ Controller integration
+
+这已经不是简单 demo，而是工业机器人软件栈。
