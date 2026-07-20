@@ -543,7 +543,6 @@ Final result from Troubleshooting.md:
 ### Step 2: Check motion.py
 
 Purpose:
-
 `motion.py` is the robot arm motion abstraction layer.
 Its responsibility is to hide the complexity of MoveItPy, planning scene, IK, and trajectory execution.
 
