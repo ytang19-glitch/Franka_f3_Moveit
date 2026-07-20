@@ -562,8 +562,44 @@ colcon build \
 --symlink-install
 ```
 
+```
+### Step 3: Basic MoveItPy Workflow
 
+Purpose:
 
+This example demonstrates the basic workflow of MoveItPy. The process consists of four main steps:
+- Initialize the ROS 2 node and MoveItPy.
+- Load a planning component (robot planning group).
+- Generate a motion plan.
+- Execute the planned traject
+
+Workflow
+```bash
+InitialWorkflowize ROS 2
+        │
+        ▼
+Create MoveItPy Object
+        │
+        ▼
+Load Planning Component
+(e.g. panda_arm / fr3_arm)
+        │
+        ▼
+Set Goal State
+        │
+        ▼
+Generate Motion Plan
+        │
+        ▼
+Execute Trajectory
+```
+
+Links:
+```bash
+https://docs.ros.org/en/jazzy/p/moveit_py/__README.html
+```
+
+### July 21 — Pick and Place Development Log
 
 
 
