@@ -601,7 +601,7 @@ https://docs.ros.org/en/jazzy/p/moveit_py/__README.html
 ---
 
 
-### July 21 — MoveItPy Arm Execution Mistakes Log
+### July 20 — MoveItPy Arm Execution Mistakes Log
 
 ### Topic
 Franka FR3 arm execution using **MoveItPy**, **OMPL**, and `fr3_arm_controller`.
