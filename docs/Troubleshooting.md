@@ -1752,6 +1752,144 @@ Next Actions:
 7. Update Troubleshooting.md with the OMPL plugin and adapter issue.
 ```
 
+### July 20 — MoveItPy Arm Execution Development Log
 
+### Goal
+
+Verify that the Franka FR3 arm can execute a planned trajectory through **MoveItPy**, **OMPL**, and `fr3_arm_controller`.
+
+Gripper integration is postponed.  
+Today focuses only on the arm execution pipeline.
+
+---
+
+### Tested Pipeline
+
+```text
+MoveItPy
+    ↓
+OMPL planner
+    ↓
+Joint trajectory
+    ↓
+FollowJointTrajectory action
+    ↓
+fr3_arm_controller
+    ↓
+ros2_control
+    ↓
+franka_hardware
+    ↓
+libfranka / FCI
+    ↓
+Franka FR3
+Initial Problem
+
+MoveItPy could generate a plan, but execution was rejected by the controller.
+
+Goal request rejected
+Goal was rejected by server
+Completed trajectory execution with status ABORTED
+
+This means:
+
+Planning succeeded, but trajectory execution failed.
+Verification
+
+The robot-side execution pipeline was checked first.
+
+Verified results:
+
+- fr3_arm_controller active                         
+- FollowJointTrajectory action server available     
+- MoveIt action client connected                    
+- FR3 effort command interfaces claimed             
+- /joint_states publishing FR3 joints               
+- Direct FollowJointTrajectory command succeeded    
+
+A direct action command to fr3_arm_controller succeeded, proving that the controller, FCI, hardware interface, and real robot were working.
+
+Therefore, the issue was not the robot hardware.
+
+Root Cause
+
+The main issue was in the custom MoveIt launch configuration.
+
+The OMPL planning plugin and planning adapters were not configured correctly.
+
+Main plugin bug:
+```bash
+planning_plugins    wrong
+planning_plugin     correct
+```
+The wrong parameter caused:
+
+Planning plugin name is empty or not defined in namespace 'ompl'
+Adapter / Time Sequence Fix
+
+MoveIt planning success only means OMPL found a geometric path.
+
+For real controller execution, the trajectory also needs a valid time sequence:
+
+time_from_start
+velocity
+acceleration
+trajectory timing
+
+This requires planning response adapters.
+
+Important adapter:
+
+default_planning_response_adapters/AddTimeOptimalParameterization
+
+Purpose:
+
+AddTimeOptimalParameterization converts the planned path into a time-parameterized trajectory.
+
+Without this adapter, MoveIt may generate a path, but fr3_arm_controller can reject the goal because the trajectory is not properly timed.
+
+Launch Configuration Fix
+
+The custom launch file was updated to include:
+
+OMPL planning plugin
+request adapters
+response adapters
+velocity scaling
+acceleration scaling
+controller configuration
+trajectory execution configuration
+
+Key configuration:
+```bash
+ompl.update({
+    "planning_plugin": "ompl_interface/OMPLPlanner",
+
+    "request_adapters": (
+        "default_planning_request_adapters/ResolveConstraintFrames "
+        "default_planning_request_adapters/ValidateWorkspaceBounds "
+        "default_planning_request_adapters/CheckStartStateBounds "
+        "default_planning_request_adapters/CheckStartStateCollision"
+    ),
+
+    "response_adapters": (
+        "default_planning_response_adapters/AddTimeOptimalParameterization "
+        "default_planning_response_adapters/ValidateSolution "
+        "default_planning_response_adapters/DisplayMotionPath"
+    ),
+
+    "start_state_max_bounds_error": 0.1,
+})
+```
+Plan request parameters were also completed:
+```bash
+"plan_request_params": {
+    "planning_pipeline": "ompl",
+    "planner_id": "RRTConnectkConfigDefault",
+    "planning_time": 5.0,
+    "max_velocity_scaling_factor": 0.05,
+    "max_acceleration_scaling_factor": 0.05,
+}
+```
 
 
