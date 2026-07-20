@@ -1526,22 +1526,17 @@ The critical fix was in the custom MoveIt launch configuration.
 8. Update Troubleshooting.md with this debugging chain.
 ```
 
+---
 
-# July 21 — MoveItPy Arm Execution Mistakes Log
+### July 21 — MoveItPy Arm Execution Mistakes Log
 
-## Topic
-
+### Topic
 Franka FR3 arm execution using **MoveItPy**, **OMPL**, and `fr3_arm_controller`.
-
 Gripper integration is postponed.  
 This log focuses only on the FR3 arm motion pipeline.
 
----
-
-## Goal
-
+### Goal
 Verify that a planned trajectory from MoveItPy can be executed on the real Franka FR3 arm.
-
 Target execution chain:
 
 ```text
