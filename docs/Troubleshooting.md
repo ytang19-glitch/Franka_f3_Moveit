@@ -973,9 +973,32 @@ if plan_result:
 rclpy.shutdown()
 ```
 
+## July 20th:
 
+TypeError: set_goal_state(): incompatible function arguments
 
+    
+    
+    
+    
+    
+    # ==========================
+    # OMPL
+    # ==========================
 
+    ompl_yaml = load_yaml(
+        "franka_fr3_moveit_config",
+        "config/ompl_planning.yaml",
+    )
+
+    ompl = {
+        "planning_plugins": [
+            "ompl_interface/OMPLPlanner",
+        ]
+    }
+    ompl.update(ompl_yaml)
+
+----
 
 
 
