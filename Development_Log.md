@@ -563,24 +563,23 @@ colcon build \
 --symlink-install
 ```
 
-### Step 3: Check motion.py
 
-Purpose:
-motion.py is a low-level robot arm controller.
-pick_place.py should not contain MoveItPy details. It should only describe the task sequence:
 
-...bash
-1. gripper_control.py
-        |
-        | verify hardware
 
-2. motion.py
-        |
-        | verify arm motion
 
-3. pick_place.py
-        |
-        | combine both
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
