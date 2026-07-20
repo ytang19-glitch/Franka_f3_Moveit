@@ -908,3 +908,27 @@ source install/setup.bash
 ```bash
 ros2 run fr3_moveit_python gripper_control
 ```
+
+
+---
+
+Could not find parameter robot_description_semantic
+
+ moveit = MoveItPy(
+[pick_place-1] RuntimeError: Unable to configure planning scene monitor)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
