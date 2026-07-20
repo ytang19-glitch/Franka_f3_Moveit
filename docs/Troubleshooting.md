@@ -977,11 +977,7 @@ rclpy.shutdown()
 
 TypeError: set_goal_state(): incompatible function arguments
 
-    
-    
-    
-    
-    
+ 
     # ==========================
     # OMPL
     # ==========================
@@ -1000,7 +996,535 @@ TypeError: set_goal_state(): incompatible function arguments
 
 ----
 
+## July 20th — MoveItPy Execution Pipeline Debugging Log
 
+### Issue
+
+MoveItPy could successfully generate a motion plan, but trajectory execution was initially rejected by `fr3_arm_controller`.
+
+Main failure:
+
+```text
+Goal request rejected
+Goal was rejected by server
+Completed trajectory execution with status ABORTED
+```
+
+The problem was not mainly in the high-level task logic.  
+The debugging focus was the connection between:
+
+```text
+MoveItPy
+    ↓
+OMPL planner
+    ↓
+MoveIt trajectory execution
+    ↓
+FollowJointTrajectory action
+    ↓
+fr3_arm_controller
+    ↓
+Franka FR3
+```
+
+---
+
+### Background
+
+The intended execution pipeline was:
+
+```text
+MoveItPy
+    ↓
+OMPL planning
+    ↓
+Joint trajectory
+    ↓
+FollowJointTrajectory action
+    ↓
+fr3_arm_controller
+    ↓
+ros2_control
+    ↓
+franka_hardware
+    ↓
+libfranka / FCI
+    ↓
+Franka FR3
+```
+
+The system environment was:
+
+```text
+ROS 2 Jazzy
+MoveIt 2
+MoveItPy
+franka_ros2
+Franka FR3
+OMPL
+JointTrajectoryController
+```
+
+---
+
+### Symptom 1 — MoveItPy API Usage Error
+
+The first issue was caused by incompatible MoveItPy API usage.
+
+Observed error:
+
+```text
+TypeError: set_start_state(): incompatible function arguments
+```
+
+The start state was originally passed with an incompatible argument format.
+
+The corrected approach was to use the planning component's current state interface:
+
+```text
+Use current robot state through the planning component.
+Do not directly call get_current_state() from RobotModel.
+```
+
+---
+
+### Symptom 2 — Goal State Format Error
+
+A second API error occurred when setting the goal state.
+
+Observed error:
+
+```text
+TypeError: set_goal_state(): incompatible function arguments
+```
+
+The issue was caused by passing joint targets in an unsupported format.
+
+The corrected approach was:
+
+```text
+Create a RobotState.
+Set joint group positions using a NumPy array.
+Pass the RobotState as the goal state.
+```
+
+Important note:
+
+```text
+set_joint_group_positions() requires numpy.ndarray.
+```
+
+---
+
+### Symptom 3 — RobotModel Current State Error
+
+Another error appeared:
+
+```text
+AttributeError: 'moveit.core.robot_model.RobotModel' object has no attribute 'get_current_state'
+```
+
+Root cause:
+
+```text
+RobotModel only describes the robot model.
+It does not provide the live current robot state.
+```
+
+Resolution:
+
+```text
+Use the PlanningComponent current-state method instead of reading current state from RobotModel.
+```
+
+---
+
+### Investigation 1 — Controller Status
+
+Command:
+
+```bash
+ros2 control list_controllers
+```
+
+Result:
+
+```text
+fr3_arm_controller             joint_trajectory_controller/JointTrajectoryController       active
+joint_state_broadcaster        joint_state_broadcaster/JointStateBroadcaster               active
+franka_robot_state_broadcaster franka_robot_state_broadcaster/FrankaRobotStateBroadcaster  active
+```
+
+Conclusion:
+
+```text
+fr3_arm_controller was active.
+```
+
+Therefore, the failure was not caused by an inactive controller.
+
+---
+
+### Investigation 2 — FollowJointTrajectory Action Server
+
+Command:
+
+```bash
+ros2 action list -t | grep FollowJointTrajectory
+```
+
+Result:
+
+```text
+/fr3_arm_controller/follow_joint_trajectory [control_msgs/action/FollowJointTrajectory]
+```
+
+Command:
+
+```bash
+ros2 action info /fr3_arm_controller/follow_joint_trajectory
+```
+
+Result:
+
+```text
+Action clients: 1
+    /moveit_simple_controller_manager
+
+Action servers: 1
+    /fr3_arm_controller
+```
+
+Conclusion:
+
+```text
+MoveIt could see the FollowJointTrajectory action server.
+```
+
+Therefore, the failure was not caused by a missing action server.
+
+---
+
+### Investigation 3 — Controller Interfaces
+
+Command:
+
+```bash
+ros2 param get /fr3_arm_controller command_interfaces
+ros2 param get /fr3_arm_controller state_interfaces
+```
+
+Result:
+
+```text
+String values are: ['effort']
+String values are: ['position', 'velocity']
+```
+
+Conclusion:
+
+```text
+fr3_arm_controller uses effort command interface and position/velocity state interfaces.
+```
+
+This matched the expected Franka MoveIt controller configuration.
+
+---
+
+### Investigation 4 — Hardware Interfaces
+
+Command:
+
+```bash
+ros2 control list_hardware_interfaces
+```
+
+Important result:
+
+```text
+fr3_joint1/effort [available] [claimed]
+fr3_joint2/effort [available] [claimed]
+fr3_joint3/effort [available] [claimed]
+fr3_joint4/effort [available] [claimed]
+fr3_joint5/effort [available] [claimed]
+fr3_joint6/effort [available] [claimed]
+fr3_joint7/effort [available] [claimed]
+```
+
+Conclusion:
+
+```text
+The arm controller successfully claimed all seven FR3 effort interfaces.
+```
+
+Therefore, the controller had access to the required hardware command interfaces.
+
+---
+
+### Investigation 5 — Joint State Topic
+
+Command:
+
+```bash
+ros2 topic echo /joint_states --once
+```
+
+Result:
+
+```text
+name:
+- fr3_joint1
+- fr3_joint2
+- fr3_joint3
+- fr3_joint4
+- fr3_joint5
+- fr3_joint6
+- fr3_joint7
+- fr3_finger_joint1
+- fr3_finger_joint2
+```
+
+Conclusion:
+
+```text
+/joint_states contained all required FR3 arm joints.
+```
+
+Therefore, MoveIt had access to the current robot state.
+
+---
+
+### Investigation 6 — Direct Controller Action Test
+
+A direct action goal was sent to `fr3_arm_controller`.
+
+Command:
+
+```bash
+ros2 action send_goal /fr3_arm_controller/follow_joint_trajectory \
+control_msgs/action/FollowJointTrajectory \
+"{trajectory: {joint_names: ['fr3_joint1', 'fr3_joint2', 'fr3_joint3', 'fr3_joint4', 'fr3_joint5', 'fr3_joint6', 'fr3_joint7'], points: [{positions: [-0.125, -0.114, 0.340, -1.512, -0.050, 1.434, -2.302], velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], time_from_start: {sec: 5, nanosec: 0}}]}}"
+```
+
+Result:
+
+```text
+Goal successfully reached!
+Goal finished with status: SUCCEEDED
+```
+
+Conclusion:
+
+```text
+fr3_arm_controller, action server, hardware interface, FCI connection, and real robot execution path were working correctly.
+```
+
+This isolated the issue to the MoveItPy launch/planning configuration rather than the robot controller or hardware.
+
+---
+
+### Root Cause Analysis
+
+The direct controller action succeeded, but MoveItPy trajectory execution was rejected.
+
+Therefore, the issue was not caused by:
+
+```text
+controller inactive
+missing action server
+wrong joint names
+missing joint states
+unclaimed hardware interface
+FCI failure
+robot hardware failure
+```
+
+The issue was caused by incomplete MoveIt planning and execution configuration in the custom launch file.
+
+The earlier warning was:
+
+```text
+No planning request adapter names specified.
+No planning response adapter names specified.
+```
+
+This indicated that the planning pipeline was not fully configured.
+
+MoveIt could generate a geometric plan, but the trajectory was not correctly prepared for controller execution.
+
+---
+
+### Launch File Fix
+
+The custom launch file was updated to explicitly define:
+
+```text
+OMPL planning plugin
+planning request adapters
+planning response adapters
+start state bound checking
+velocity scaling
+acceleration scaling
+controller configuration
+trajectory execution configuration
+```
+
+Important correction:
+
+```text
+Use planning_plugin, not planning_plugins.
+```
+
+The incorrect plural form caused MoveIt to report:
+
+```text
+Planning plugin name is empty or not defined in namespace 'ompl'
+```
+
+Correct OMPL configuration structure:
+
+```python
+ompl_yaml = load_yaml(
+    "franka_fr3_moveit_config",
+    "config/ompl_planning.yaml",
+)
+
+ompl = {}
+ompl.update(ompl_yaml)
+
+ompl.update({
+    "planning_plugin": "ompl_interface/OMPLPlanner",
+
+    "request_adapters": (
+        "default_planning_request_adapters/ResolveConstraintFrames "
+        "default_planning_request_adapters/ValidateWorkspaceBounds "
+        "default_planning_request_adapters/CheckStartStateBounds "
+        "default_planning_request_adapters/CheckStartStateCollision"
+    ),
+
+    "response_adapters": (
+        "default_planning_response_adapters/AddTimeOptimalParameterization "
+        "default_planning_response_adapters/ValidateSolution "
+        "default_planning_response_adapters/DisplayMotionPath"
+    ),
+
+    "start_state_max_bounds_error": 0.1,
+})
+```
+
+Plan request parameters were also completed:
+
+```python
+"plan_request_params": {
+    "planning_pipeline": "ompl",
+    "planner_id": "RRTConnectkConfigDefault",
+    "planning_time": 5.0,
+    "max_velocity_scaling_factor": 0.05,
+    "max_acceleration_scaling_factor": 0.05,
+}
+```
+
+---
+
+### Final Result
+
+After fixing the MoveItPy API usage and the custom launch configuration, trajectory execution succeeded.
+
+Final successful behavior:
+
+```text
+Calling Planner 'OMPL'
+Goal request accepted
+Controller 'fr3_arm_controller' successfully finished
+Completed trajectory execution with status SUCCEEDED
+```
+
+This confirmed the full execution pipeline:
+
+```text
+MoveItPy
+    ↓
+OMPL planning
+    ↓
+MoveIt trajectory execution
+    ↓
+FollowJointTrajectory action
+    ↓
+fr3_arm_controller
+    ↓
+ros2_control
+    ↓
+franka_hardware
+    ↓
+libfranka / FCI
+    ↓
+Franka FR3
+```
+
+---
+
+### Current Project Status
+
+Verified components:
+
+```text
+FR3 hardware connection                    
+Franka FCI                                 
+ROS 2 Jazzy environment                    
+MoveIt 2 configuration                     
+MoveItPy API usage                         
+OMPL planner loading                       
+fr3_arm planning group                     
+Joint trajectory generation                
+FollowJointTrajectory action connection    
+fr3_arm_controller execution              
+Effort interface control                   
+Real robot motion execution                
+```
+
+---
+
+### Technical Conclusion
+
+The main technical conclusion is:
+
+```text
+Planning success does not guarantee execution success.
+```
+
+For real robot execution, the following must all be valid:
+
+```text
+MoveItPy API usage
+planning group
+current robot state
+OMPL planning pipeline
+planning adapters
+trajectory timing
+controller configuration
+FollowJointTrajectory action server
+claimed hardware interfaces
+real robot FCI connection
+```
+
+The final fix was not mainly in the high-level task script.
+
+The critical fix was in the custom MoveIt launch configuration.
+
+---
+
+### Next Actions
+
+```text
+1. Clean up the custom launch file.
+2. Keep direct FollowJointTrajectory action command as a hardware verification test.
+3. Move reusable arm motion logic into motion.py.
+4. Keep high-level pick-and-place task logic separate from reusable motion APIs.
+5. Add gripper open/close sequence.
+6. Add Cartesian approach and retreat motion.
+7. Test pick-and-place with small safe motions first.
+8. Update Troubleshooting.md with this debugging chain.
+```
 
 
 
