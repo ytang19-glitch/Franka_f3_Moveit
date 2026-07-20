@@ -600,9 +600,8 @@ https://docs.ros.org/en/jazzy/p/moveit_py/__README.html
 ```
 ---
 
-### July 21 — Pick and Place Development Log
 
-## July 20 — MoveItPy Arm Execution Development Log
+### July 20 — MoveItPy Arm Execution Development Log
 
 ### Goal
 
@@ -668,10 +667,10 @@ The main issue was in the custom MoveIt launch configuration.
 The OMPL planning plugin and planning adapters were not configured correctly.
 
 Main plugin bug:
-
+```bash
 planning_plugins    wrong
 planning_plugin     correct
-
+```
 The wrong parameter caused:
 
 Planning plugin name is empty or not defined in namespace 'ompl'
@@ -711,7 +710,7 @@ controller configuration
 trajectory execution configuration
 
 Key configuration:
-
+```bash
 ompl.update({
     "planning_plugin": "ompl_interface/OMPLPlanner",
 
@@ -730,9 +729,9 @@ ompl.update({
 
     "start_state_max_bounds_error": 0.1,
 })
-
+```
 Plan request parameters were also completed:
-
+```bash
 "plan_request_params": {
     "planning_pipeline": "ompl",
     "planner_id": "RRTConnectkConfigDefault",
@@ -740,17 +739,19 @@ Plan request parameters were also completed:
     "max_velocity_scaling_factor": 0.05,
     "max_acceleration_scaling_factor": 0.05,
 }
-Final Result
+```
+Final Result:
 
 After fixing the OMPL plugin configuration and adding the planning adapters, MoveItPy execution succeeded.
 
 Final result:
-
-Calling Planner 'OMPL'
-Goal request accepted
-Controller 'fr3_arm_controller' successfully finished
-Completed trajectory execution with status SUCCEEDED
-Technical Conclusion
+```bash
+- Calling Planner 'OMPL'
+- Goal request accepted
+- Controller 'fr3_arm_controller' successfully finished
+- Completed trajectory execution with status SUCCEEDED
+```
+### Technical Conclusion
 
 Today’s main result:
 
@@ -767,13 +768,13 @@ The critical fix was:
 Correct OMPL plugin parameter
 + add response adapter for time parameterization
 Current Status
-MoveItPy workflow verified                         ✅
-OMPL planner loaded                                ✅
-fr3_arm_controller verified                        ✅
-Direct FollowJointTrajectory command succeeded     ✅
-Trajectory timing adapter added                    ✅
-MoveItPy arm execution succeeded                   ✅
-Ready for reusable arm motion abstraction          ✅
+MoveItPy workflow verified                         
+OMPL planner loaded                                
+fr3_arm_controller verified                        
+Direct FollowJointTrajectory command succeeded     
+Trajectory timing adapter added                    
+MoveItPy arm execution succeeded                   
+Ready for reusable arm motion abstraction          
 Next Actions
 1. Clean up the custom MoveIt launch file.
 2. Keep direct FollowJointTrajectory command as a hardware test.
