@@ -915,6 +915,32 @@ ros2 run fr3_moveit_python gripper_control
 Question:
 Could not find parameter robot_description_semantic
 
+Original code:
+
+```bash
+def main():
+    rclpy.init()
+
+    moveit = MoveItPy(
+        node_name="pick_place"
+    )
+
+    arm = moveit.get_planning_component(
+        "fr3_arm"
+    )
+
+    robot_model = moveit.get_robot_model()
+
+    robot_state = RobotState(
+        robot_model
+    )
+
+    arm.set_start_state(
+        robot_state
+    )
+```
+
+
  moveit = MoveItPy(
 [pick_place-1] RuntimeError: Unable to configure planning scene monitor)
 
