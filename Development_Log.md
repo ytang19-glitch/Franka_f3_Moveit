@@ -594,7 +594,7 @@ Generate Motion Plan
 Execute Trajectory
 ```
 
-Links:
+Relative Links:
 ```bash
 https://docs.ros.org/en/jazzy/p/moveit_py/__README.html
 ```
