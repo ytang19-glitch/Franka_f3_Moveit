@@ -12,6 +12,10 @@ source /opt/ros/jazzy/setup.bash
 source ~/franka_ros2_ws/install/setup.bash
 ```
 
+
+
+
+---
 ### July 7 — Official Franka ROS 2 Controller Test
 
 ### Goal
