@@ -481,7 +481,7 @@ The main technical lesson was:
 Before integrating the gripper into pick-and-place logic, the gripper action interface should be tested independently.
 ```
 
-### July 16 — Pick and place (test gripper)
+---
 
 ### July 16 — Cartesian Motion Refactoring Log
 
