@@ -479,104 +479,119 @@ Before integrating the gripper into pick-and-place logic, the gripper action int
 
 ### July 16 — Pick and place (test gripper)
 
-#### (1) Logic of pick and place
-First try: open
-logic:
-```bash
-cartesian + gripper  close + cartesian + joint motion + cartesian + gripper release
-```
-#### (2) Change cartesian_move.py
-```    
-#### Original version (cartesian_move.py)
-```bash
-main()
-    |
-    ├── create MoveItPy
-    ├── get pose
-    ├── create target
-    ├── plan
-    ├── execute
-```
-#### New version (cartesian_move.py)
+### July 16 — Cartesian Motion Refactoring Log
 
-Standalone:
+### Goal
+
+Refactor `cartesian_move.py` so that one file supports two purposes:
+
+1. **Standalone Cartesian motion test**
+2. **Reusable Cartesian motion module**
+
+The reusable Cartesian logic remains inside `cartesian_move.py`. Therefore, a separate `cartesian_motion.py` file is not required.
+
+The file structure is:
+
+```text
+cartesian_move.py
+│
+├── CartesianMotion class
+│   └── Reusable Cartesian motion methods
+│
+└── main()
+    └── Standalone Cartesian motion test
+```
+
+The reusable class provides methods such as:
+
+```python
+motion.move_relative(dx=0.0, dy=0.0, dz=-0.05)
+motion.move_down(0.05)
+motion.move_up(0.05)
+```
+
+The `main()` function is only used when `cartesian_move.py` is launched as a standalone application.
+
+---
+
+### Test
+
+#### Standalone Test
+
+Run `cartesian_move.py` directly through the launch file:
 
 ```bash
 ros2 launch fr3_moveit_python \
-    cartesian_move.launch.py \
-    dz:=-0.05 \
-    execute:=true
-```
-Reusable:
-```bash
-motion.move_down(0.10)
+  cartesian_move.launch.py \
+  dz:=-0.05 \
+  execute:=true
 ```
 
-Build the engine every time if we want to drive.
-```bash
-Drive to school--Build engine--Install wheels--Install steering--Drive--Every trip repeats the same work.---Refactored version
-```
-#### Add new code:
- already have a car.
-```bash
-Drive to school--Start engine--Drive
-```
-The engine is reusable. motion.py is the engine.
+The standalone execution flow is:
 
-
-
-#### (3) Debugging the hardware
-Debugging:
-```bash
-ros2 run fr3_moveit_python gripper_control
+```text
+main()
+  ↓
+Create CartesianMotion
+  ↓
+Read dx, dy, and dz
+  ↓
+Plan Cartesian motion
+  ↓
+Execute the trajectory
 ```
 
-After close the gripper:
+#### Reusable Module Test
 
-```bash
-ros2 action send_goal \
-/franka_gripper/move \
-franka_msgs/action/Move \
-"{width: 0.00, speed: 0.05}"
-```
-(4) Simplifuy cartesian_move.py
+Import the Cartesian motion class into another file:
 
-main() is basically the entry point that starts  robot application.
-For reusage of cartesian_move.py
-Delete:
-```bash
-def flush_and_exit(exit_code: int) -> None:
-    sys.stdout.flush()
-    sys.stderr.flush()
+```python
+from fr3_moveit_python.cartesian_move import CartesianMotion
 
-    # Avoid the MoveItPy / MoveItCpp destructor crash seen on this Jazzy setup.
-    os._exit(exit_code)
+motion = CartesianMotion()
+
+motion.move_down(0.05)
+motion.move_up(0.05)
 ```
 
+Example use in `pick_place.py`:
 
-#### Structure of moveit_python:
-```bash
-fr3_moveit_python/
-│
-├── cartesian_move.py          # original demo (keep)
-│
-├── motion.py                  # new reusable MoveItPy class
-│
-├── cartesian_pickplace.py     # pick/place Cartesian interface
-│
-├── gripper_control.py
-│ (1) Standalone test mode → verify hardware/action server works.
-│ (2) Reusable library mode → use the same class inside pick_place.py.
-│
-└── pick_place.py              # final task
+```python
+motion.move_down(approach_distance)
+gripper.close()
+motion.move_up(lift_distance)
 ```
+
+The reusable methods should return success or failure instead of terminating the complete Python process.
+
+---
+
+### Conclusion
+
+`cartesian_move.py` now covers two functions:
+
+```text
+cartesian_move.py
+    ├── Standalone Cartesian motion test
+    └── Reusable Cartesian motion module
+```
+
+The `CartesianMotion` class contains reusable planning and execution logic.
+
+The `main()` function provides the standalone test interface.
+
+This avoids duplicating Cartesian motion code while still allowing the motion to be tested independently and reused by `pick_place.py`.
+
 ---
 
 ### July 20 — Pick and Place Development Log
 
 ### Previous Goal:
 Develop a reusable Franka FR3 pick-and-place framework based on MoveItPy and ROS2.
-#### Current stage: Debugging and test code 
+
+#### Current Goal : Debugging and test code 
+
+### Test
 
 ### Step 1: Gripper Hardware Verification
 
@@ -595,6 +610,7 @@ Final result from Troubleshooting.md:
 - Always verify hardware interfaces before debugging application-level code.
 - setup.py entry points must match the actual Python architecture.
 ```
+
 ### Step 2: Check motion.py
 
 Purpose:
@@ -617,7 +633,8 @@ colcon build \
 --symlink-install
 ```
 
-```
+---
+
 ### Step 3: Basic MoveItPy Workflow
 
 Purpose:
@@ -655,7 +672,6 @@ https://docs.ros.org/en/jazzy/p/moveit_py/__README.html
 ```
 ---
 
-
 ### July 20 — MoveItPy Arm Execution Mistakes Log
 
 ### Topic
@@ -686,7 +702,9 @@ libfranka / FCI
     ↓
 Franka FR3
 ```
-### Mistake 1 — Wrong Current State Usage
+### Mistakes
+
+#### Mistake 1 — Wrong Current State Usage
 Problem:
  get the live robot state from RobotModel.
 
@@ -697,7 +715,7 @@ Fix
 RobotModel only describes the robot model.
 The current robot state should be handled through the MoveItPy planning component.
 
-### Mistake 2 — Wrong Goal State Format
+#### Mistake 2 — Wrong Goal State Format
 Problem:
 The goal joint positions were passed in an unsupported MoveItPy format.
 
@@ -712,7 +730,8 @@ set_joint_group_positions()
     ↓
 set_goal_state()
 ```
-### Mistake 3 — Misdiagnosing Execution Failure as Hardware Failure
+---
+#### Mistake 3 — Misdiagnosing Execution Failure as Hardware Failure
 Problem:
 
 MoveItPy planning succeeded, but execution failed:
@@ -745,7 +764,7 @@ The FR3 controller, FCI connection, hardware interface, and real robot execution
 
 The problem was on the MoveIt configuration side.
 
-### Mistake 4 — Wrong OMPL Plugin Parameter
+#### Mistake 4 — Wrong OMPL Plugin Parameter
 Problem:
 
 The custom launch file used the wrong OMPL plugin parameter name.
@@ -766,7 +785,7 @@ Use the correct singular parameter:
 
 planning_plugin: ompl_interface/OMPLPlanner
 
-### Mistake 5 — Missing Planning Adapters for Time Sequence
+#### Mistake 5 — Missing Planning Adapters for Time Sequence
 Problem
 
 MoveIt could generate a geometric path, but the trajectory was not properly prepared for real controller execution.
@@ -791,14 +810,15 @@ AddTimeOptimalParameterization converts the geometric path into a time-parameter
 
 Without this adapter, fr3_arm_controller may reject the goal even when OMPL planning succeeds.
 
-### Mistake 6 — Missing Velocity and Acceleration Scaling
+#### Mistake 6 — Missing Velocity and Acceleration Scaling
 Problem:
 
 The launch file did not define:
-
+```bash
 max_velocity_scaling_factor
 max_acceleration_scaling_factor
-Fix
+```
+Fix:
 
 Add safe velocity and acceleration scaling parameters for real robot execution.
 
@@ -808,20 +828,18 @@ max_velocity_scaling_factor: 0.05
 max_acceleration_scaling_factor: 0.05
 Mistake 7 — Misleading Execution Output
 ```
-Problem
-
-The script printed:
-
-Execution finished
-
+Problem:
+```bash
+The script printed: Execution finished
+```
 even when MoveIt reported:
 
 Completed trajectory execution with status ABORTED
-Fix
+Fix:
 
 Only print execution success after checking the actual execution result.
 
-Final Fix Summary
+#### Final Fix Summary:
 
 The critical fixes were:
 ```bash
@@ -833,7 +851,7 @@ Add time-parameterization adapter
 Add velocity and acceleration scaling
 Verify controller using direct FollowJointTrajectory action
 ```
-Final Result
+### Result
 
 After fixing the MoveItPy usage and custom launch configuration, the full execution pipeline succeeded.
 
@@ -869,7 +887,7 @@ Trajectory time-parameterization added
 MoveItPy arm execution succeeded                   
 Gripper integration postponed           
 
-Next Actions:
+### Next Actions:
 ```bash
 1. Clean up the custom MoveIt launch file.
 2. Keep direct FollowJointTrajectory command as a hardware test.
