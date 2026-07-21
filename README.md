@@ -1,8 +1,8 @@
-# Franka_f3_Moveit
+## Franka_f3_Moveit
 
-# Franka FR3 MoveIt Cartesian Motion Demo
+### Franka FR3 MoveIt Cartesian Motion Demo
 
-## Goal
+### Goal
 
 This project tests Cartesian motion control for the Franka FR3 robot **without Docker**.
 
@@ -13,11 +13,11 @@ Move the FR3 end-effector downward by x cm using MoveIt
 ```
 The purpose is to verify that the MoveIt pipeline can communicate correctly with the Franka ROS 2 controller and execute a Cartesian trajectory on the robot.
 
-## Step 1 ; Ros2 Package
+### Step 1 ; Ros2 Package
 
-# Creating the `fr3_moveit_python` Package
+### Creating the `fr3_moveit_python` Package
 
-## 1. Create a ROS 2 Python package
+#### 1. Create a ROS 2 Python package
 
 Go to your ROS2 workspace:
 
@@ -51,7 +51,7 @@ fr3_moveit_python/
 
 ---
 
-# 2. Create the motion script
+#### 2. Create the motion script
 
 Create the Python node:
 
@@ -70,7 +70,7 @@ This node is responsible for:
 
 ---
 
-# 3. Create the launch file
+#### 3. Create the launch file
 
 Create the launch directory:
 
@@ -90,7 +90,7 @@ The launch file loads the official MoveIt configuration and passes all required 
 
 ---
 
-# 4. Modify `setup.py`
+#### 4. Modify `setup.py`
 
 Open:
 
@@ -106,7 +106,7 @@ Update it so that:
 
 ---
 
-# 5. Build the package
+#### 5. Build the package
 
 Go to the workspace:
 
@@ -136,7 +136,7 @@ source ~/franka_ros2_ws/install/setup.bash
 
 ---
 
-# 6. Verify the installation
+#### 6. Verify the installation
 
 Check the executable:
 
@@ -165,7 +165,7 @@ cartesian_move.launch.py
 
 ---
 
-# 7. Run the package
+#### 7. Run the package
 
 Run the official moveit file:
 ```bash
@@ -189,10 +189,14 @@ ros2 launch fr3_moveit_python \
     dz:=-0.05 \
     execute:=true
 ```
-
 ---
 
-# Workflow
+
+### Summary
+
+The Cartesian motion demo uses MoveIt as the high-level planning layer between the Python command and the Franka hardware
+
+#### Step 1 ; Workflow
 
 ```text
 Create ROS2 package
@@ -217,8 +221,7 @@ Launch the Cartesian motion node
 ```
 
 
-
-## Step 2 ; System Overview
+### Step 2 ; System Overview
 
 The control flow is:
 
