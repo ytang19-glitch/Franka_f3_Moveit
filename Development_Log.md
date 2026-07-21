@@ -363,14 +363,33 @@ correct README.md
 ---
 ### July 14 — Add to existing package
 
+## July 14 — Add Pick-and-Place Files to Existing Package
+
+### Goal
+
+Add the gripper-control and pick-and-place files to the existing `fr3_moveit_python` ROS 2 package instead of creating a separate package.
+
+Create the new Python files inside the package source directory:
+
 ```bash
 cd ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python
+
 touch gripper_control.py
 touch pick_place.py
 ```
 
-setup.py:
-```bash
+The package now contains:
+
+```text
+fr3_moveit_python/
+├── cartesian_move.py
+├── gripper_control.py
+└── pick_place.py
+```
+
+Update `setup.py` so that `gripper_control.py` can be executed as a ROS 2 node:
+
+```python
 entry_points={
     'console_scripts': [
         'cartesian_move = fr3_moveit_python.cartesian_move:main',
@@ -378,6 +397,64 @@ entry_points={
     ],
 },
 ```
+
+At this stage, `pick_place.py` was created for later integration but was not yet added as a console-script entry point.
+
+---
+
+### Test
+
+#### Step 1 
+Rebuild the package after modifying `setup.py`:
+
+```bash
+cd ~/franka_ros2_ws
+
+colcon build --packages-select fr3_moveit_python
+source install/setup.bash
+```
+#### Step 2
+
+Confirm that the executable is available:
+
+```bash
+ros2 pkg executables fr3_moveit_python
+```
+
+Expected executables:
+
+```text
+fr3_moveit_python cartesian_move
+fr3_moveit_python gripper_control
+```
+
+#### Step 3 
+
+Run the gripper-control node:
+
+```bash
+ros2 run fr3_moveit_python gripper_control
+```
+
+The `pick_place.py` file cannot yet be started with `ros2 run` because it has not been added to `setup.py`.
+
+---
+
+### Conclusion
+
+The existing `fr3_moveit_python` package was extended with two new files:
+
+```text
+gripper_control.py
+    = gripper testing and control logic
+
+pick_place.py
+    = future high-level pick-and-place sequence
+```
+
+`gripper_control` was added as a ROS 2 executable through `setup.py`.
+
+`pick_place.py` was created as the future task-orchestration file and can be added as an executable after its `main()` function is implemented.
 
 ---
 ### July 15 — Explore Potential Extension Motion ( gripper control)
@@ -597,7 +674,7 @@ Develop a reusable Franka FR3 pick-and-place framework based on MoveItPy and ROS
 
 ### Test
 
-### Step 1: Gripper Hardware Verification
+#### Step 1: Gripper Hardware Verification
 
 Purpose:
 Verify Franka gripper action interface before integrating with pick-and-place.
@@ -615,7 +692,7 @@ Final result from Troubleshooting.md:
 - setup.py entry points must match the actual Python architecture.
 ```
 
-### Step 2: Check motion.py
+#### Step 2: Check motion.py
 
 Purpose:
 `motion.py` is the robot arm motion abstraction layer.
@@ -638,8 +715,7 @@ colcon build \
 ```
 
 ---
-
-### Step 3: Basic MoveItPy Workflow
+#### Step 3: Basic MoveItPy Workflow
 
 Purpose:
 
@@ -797,15 +873,16 @@ MoveIt could generate a geometric path, but the trajectory was not properly prep
 Planning success alone does not guarantee valid trajectory timing.
 
 The controller needs:
-
-time_from_start
-velocity
-acceleration
-valid trajectory timing
-Fix
+```text
+- time_from_start
+- velocity
+- acceleration
+- valid trajectory timing
+```
+Fix:
 
 Add planning response adapters, especially:
-```
+```text
 default_planning_response_adapters/AddTimeOptimalParameterization
 ```
 Purpose
@@ -883,13 +960,14 @@ planning_plugin +
 AddTimeOptimalParameterization
 ```
 Current Status:
-MoveItPy arm planning working                      
-fr3_arm_controller verified                        
-Direct FollowJointTrajectory test succeeded        
-OMPL plugin configuration fixed                    
-Trajectory time-parameterization added             
-MoveItPy arm execution succeeded                   
-Gripper integration postponed           
+```text
+- MoveItPy arm planning working                      
+- fr3_arm_controller verified                        
+- Direct FollowJointTrajectory test succeeded        
+- OMPL plugin configuration fixed                    
+- Trajectory time-parameterization added             
+- MoveItPy arm execution succeeded                             
+```
 
 ### Next Actions:
 ```bash
