@@ -49,7 +49,6 @@ fr3_moveit_python/
 ├── resource/
 ├── test/
 ├── package.xml
-├── setup.cfg
 └── setup.py
 ```
 
