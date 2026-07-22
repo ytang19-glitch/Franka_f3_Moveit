@@ -1,43 +1,66 @@
-# Requirements:
+# Requirements
 
-## Hardware
+This project has been tested on **Ubuntu 24.04** with **ROS 2 Jazzy**.
+
+---
+
+## Hardware Requirements
+
 ```text
 - Franka FR3 robot
-- Ubuntu 24.04
-- Ethernet
-- FCI enabled
+- Ubuntu 24.04 workstation
+- Ethernet connection
+- Franka Control Interface (FCI) enabled
 ```
 
-## Software
+---
+
+## Software Requirements
+
 ```text
-- ROS2 Jazzy
+- ROS 2 Jazzy
 - MoveItPy
-- libfranka (over 0.18.0)
+- libfranka (>= 0.18.0)
 - Franka ROS 2
 - python3-scipy
 ```
+
 ---
 
 ## Workspace
+
+The project assumes the following ROS 2 workspace:
 
 ```text
 ~/franka_ros2_ws
 ```
 
-## Required ROS 2 packages
+---
+
+## Required ROS 2 Packages
+
+Update the package index:
 
 ```bash
 sudo apt update
+```
 
+Install the required ROS 2 packages:
+
+```bash
 sudo apt install \
     ros-jazzy-moveit \
     ros-jazzy-moveit-py \
     python3-scipy
+```
 
+Create the ROS 2 Python package:
+
+```bash
 ros2 pkg create ...
 ```
 
-(Optional)
+### Optional Packages
 
 ```bash
 sudo apt install \
@@ -47,9 +70,9 @@ sudo apt install \
 
 ---
 
-## Required Franka packages
+## Required Franka Packages
 
-The following packages should already exist in workspace:
+The following packages should already exist in the ROS 2 workspace:
 
 ```text
 franka_ros2
@@ -60,11 +83,8 @@ franka_robot_state_broadcaster
 franka_example_controllers
 ```
 
-Verify:
+Verify the installation:
 
 ```bash
 ros2 pkg list | grep franka
 ```
-
----
-
