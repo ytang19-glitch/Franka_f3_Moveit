@@ -1,21 +1,21 @@
-# Requirements
+# Requirements:
 
 ## Hardware
-
+```text
 - Franka FR3 robot
 - Ubuntu 24.04
 - Ethernet
 - FCI enabled
-
+```
 
 ## Software
-
+```text
 - ROS2 Jazzy
 - MoveItPy
 - libfranka (over 0.18.0)
 - Franka ROS 2
 - python3-scipy
-
+```
 ---
 
 ## Workspace
