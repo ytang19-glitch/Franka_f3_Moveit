@@ -231,13 +231,19 @@ Launch the Cartesian motion node
 The control flow is:
 
 ```text
-Python Cartesian command
+Python MoveItPy node
         ↓
-MoveIt
+MoveIt planning component
         ↓
-Inverse kinematics / planning
+Robot model + current state + planning scene
         ↓
-Joint trajectory
+IK / collision checking / planner
+        ↓
+RobotTrajectory
+        ↓
+MoveIt trajectory execution manager
+        ↓
+/fr3_arm_controller/follow_joint_trajectory
         ↓
 fr3_arm_controller
         ↓
@@ -245,9 +251,13 @@ ros2_control
         ↓
 franka_hardware
         ↓
-libfranka / FCI
+libfranka
         ↓
-Franka FR3
+FCI communication
+        ↓
+Franka control box
+        ↓
+FR3 joints
 ```
 
 This is different from directly commanding the hardware interface.
@@ -380,16 +390,16 @@ Move end-effector down by 1 cm
 is not a direct joint effort command.
 
 To execute this motion safely, the system needs:
-
-* current robot joint states
-* current end-effector pose
-* inverse kinematics
-* joint limits
-* velocity and acceleration limits
-* collision checking
-* trajectory generation
-* controller execution
-
+```text
+- current robot joint states
+- current end-effector pose
+- inverse kinematics
+- joint limits
+- velocity and acceleration limits
+- collision checking
+- trajectory generation
+- controller execution
+```
 These are handled by **MoveIt**, not directly by the hardware `command_interface`.
 
 Therefore, the correct pipeline is:
@@ -417,7 +427,7 @@ The official Franka MoveIt launch file starts the MoveIt system and loads the re
 
 However, for a custom Cartesian demo, we need our own launch file to:
 
-1. load the correct Franka FR3 MoveIt configuration
+1. load the correct Franka FR3 MoveIt configuration (launch file)
 2. start the required MoveIt nodes
 3. make sure `robot_description` and `robot_description_semantic` are available
 4. connect MoveIt to the correct controller
