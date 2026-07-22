@@ -17,11 +17,9 @@ Responsibilities:
 
 # ros2 pkg xml fr3_moveit_python
 # nano package.xml
-# cd ~/franka_ros2_ws/src/fr3_moveit_python
+# cd ~/franka_ros2_ws/src/fr3_moveit_python  gedit package.xml
 
-gedit package.xml
-
-
+----------------------------------------------------------
 
 <?xml version="1.0"?>
 <?xml-model
