@@ -4,13 +4,13 @@
 
 - [Overview](#overview)
 - [Goal](#goal)
-- [ROS 2 Package](#ros-2-package)
-- [Summary](#summary)
-- [Miscellaneous](#miscellaneous)
-
+- [Part I — ROS 2 Package](#part-i--ros-2-package)
+- [Part II — Motion Planning & Control](#part-ii--motion-planning--control)
+- [Part III — Verification & Execution](#part-iii--verification--execution)
+- [Part IV — Miscellaneous](#part-iv--miscellaneous)
 ---
 
-# Overview
+# Part I — ROS 2 Package
 
 This project demonstrates Cartesian motion control for the **Franka FR3** robot using **MoveItPy** on **native Ubuntu 24.04** with **ROS 2 Jazzy**.
 
