@@ -13,9 +13,6 @@ Example:
 
 ```text
 ros2: command not found
-
-or:
-
 Package 'fr3_moveit_python' not found
 ```
 
