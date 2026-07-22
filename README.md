@@ -195,7 +195,7 @@ ros2 launch fr3_moveit_python \
 ### Summary
 
 The Cartesian motion demo uses MoveIt as the high-level planning layer between the Python command and the Franka hardware
----
+
 
 #### Step 1 ; Workflow
 
