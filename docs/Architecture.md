@@ -101,7 +101,6 @@ fr3_moveit_python/
 │   # - move_backward()
 │   #
 │   # Used by:
-│   # - cartesian_pickplace.py
 │   # - pick_place.py
 │
 │
