@@ -1,3 +1,19 @@
+<!--
+package.xml
+
+Purpose:
+Defines the ROS 2 package metadata, build system, and software
+dependencies required to build and run the fr3_moveit_python package.
+
+Responsibilities:
+- Define package information
+- Declare build and runtime dependencies
+- Specify the build system (ament_python)
+- Enable ROS 2 tools such as colcon and ros2 to build,
+  install, and discover the package
+-->
+
+
 <?xml version="1.0"?>
 <?xml-model
 href="http://download.ros.org/schema/package_format3.xsd"
