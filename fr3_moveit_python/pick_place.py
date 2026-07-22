@@ -8,7 +8,7 @@ import numpy as np
 from moveit.planning import MoveItPy
 from moveit.core.robot_state import RobotState
 
-
+# Satefy Exit
 def flush_and_exit(exit_code: int):
     sys.stdout.flush()
     sys.stderr.flush()
