@@ -1,13 +1,24 @@
-# Development Timeline
+# Development Log
 
-- 2026-07-07_Official_Franka_ROS_2_Controller_Test.md
-- 2026-07-08_Testing_joint_trajectory_controller.md
-- 2026-07-09_Choosing_MoveIt_as_the_Main_Motion_Layer.md
-- 2026-07-10_Creating_a_Custom_ROS_2_Python_Package.md
-- 2026-07-11_Inspecting_Official_Franka_MoveIt_Configuration.md
-- 2026-07-13_Organize_the_github_file.md
-- 2026-07-14_Add_to_existing_package.md
-- 2026-07-15_Explore_Potential_Extension_Motion_gripper_control.md
-- 2026-07-16_Cartesian_Motion_Refactoring_Log.md
-- 2026-07-20_Pick_and_Place_Development_Log.md
-- 2026-07-20_MoveItPy_Arm_Execution_Mistakes_Log.md
+This directory records the development history of the **Franka FR3 MoveItPy** project.
+
+Each Markdown file documents a major development milestone, including the project goal, implementation process, technical decisions, debugging steps, and results.
+
+The purpose of these logs is to track the evolution of the project and provide a chronological reference for future development and maintenance.
+
+---
+
+## Timeline
+
+| Date | Topic |
+|------|-------|
+| July 7 | Official Franka ROS 2 Controller Test |
+| July 8 | Joint Trajectory Controller Evaluation |
+| July 9 | MoveIt Motion Architecture |
+| July 10 | Create `fr3_moveit_python` Package |
+| July 11 | Inspect Official MoveIt Configuration |
+| July 13 | GitHub Repository Organization |
+| July 14 | Add Pick-and-Place Framework |
+| July 15 | Franka Gripper Control |
+| July 16 | Cartesian Motion Refactoring |
+| July 20 | MoveItPy Execution Debugging |
