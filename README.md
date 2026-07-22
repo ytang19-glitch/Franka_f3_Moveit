@@ -13,6 +13,7 @@ Move the FR3 end-effector downward by x cm using MoveIt
 ```
 The purpose is to verify that the MoveIt pipeline can communicate correctly with the Franka ROS 2 controller and execute a Cartesian trajectory on the robot.
 
+---
 ### Step 1 ; Ros2 Package
 
 ### Creating the `fr3_moveit_python` Package
@@ -191,10 +192,10 @@ ros2 launch fr3_moveit_python \
 ```
 ---
 
-
 ### Summary
 
 The Cartesian motion demo uses MoveIt as the high-level planning layer between the Python command and the Franka hardware
+---
 
 #### Step 1 ; Workflow
 
@@ -221,7 +222,7 @@ Launch the Cartesian motion node
 ```
 
 
-### Step 2 ; System Overview
+#### Step 2 ; System Overview
 
 The control flow is:
 
@@ -249,7 +250,7 @@ This is different from directly commanding the hardware interface.
 
 ---
 
-## Why Not Directly Use `command_interface`?
+### Why Not Directly Use `command_interface`?
 
 The Franka controller uses a low-level hardware command interface, such as `effort`.
 
@@ -293,7 +294,7 @@ It is not the correct level for directly sending Cartesian motion commands.
 
 ---
 
-## Why Create a Custom Launch File and Python Node?
+### Why Create a Custom Launch File and Python Node?
 
 The official Franka MoveIt launch file starts the MoveIt system and loads the required robot configuration.
 
@@ -314,11 +315,11 @@ Python file         → send Cartesian motion request
 
 ---
 
-## Check Official Franka MoveIt Configuration
+### Check Official Franka MoveIt Configuration
 
 Before writing the custom launch file, inspect the official Franka MoveIt launch file.
 
-### Find the official MoveIt launch file
+#### Find the official MoveIt launch file
 
 ```bash
 cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/launch
@@ -326,7 +327,7 @@ nano ~/franka_ros2_ws/src/franka_fr3_moveit_config/launch/moveit.launch.py
 ```
 ---
 
-## Check Whether Official Launch Uses `MoveItConfigsBuilder`
+#### Check Whether Official Launch Uses `MoveItConfigsBuilder`
 
 ```bash
 grep -R -n \
@@ -350,7 +351,7 @@ These parameters are required by MoveIt.
 
 ---
 
-## Important MoveIt Configuration Items
+#### Important MoveIt Configuration Items
 
 MoveIt usually needs the following configuration:
 
@@ -379,7 +380,7 @@ Without these parameters, MoveIt may start but cannot correctly plan or execute 
 
 ---
 
-## Step 3: Check Franka Controller Configuration
+#### Step 3: Check Franka Controller Configuration
 
 Go to the Franka MoveIt config package:
 
@@ -420,7 +421,7 @@ MoveIt sends a joint trajectory, and the controller converts tracking error into
 
 ---
 
-## Check Joint Topics
+#### Check Joint Topics
 
 List joint-related topics:
 
@@ -444,7 +445,7 @@ If `/joint_states` is missing, MoveIt cannot know the current robot state.
 
 ---
 
-## Check Controllers
+#### Check Controllers
 
 Check loaded controllers:
 
@@ -488,7 +489,7 @@ For the 1 cm downward Cartesian motion:
 
 ---
 
-## Common Problems
+### Common Problems
 
 ### 1. `robot_description` missing
 
