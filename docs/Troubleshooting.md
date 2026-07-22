@@ -1,97 +1,127 @@
-
-## Troubleshooting Guide
+# Troubleshooting Guide
 
 This document covers common issues when building and running the **Franka FR3 MoveIt Cartesian Motion Demo** on **native Ubuntu 24.04 with ROS 2 Jazzy**.
 
+## Common Issues
 
-## 1. ROS 2 Environment Not Sourced
+### 1. ROS 2 Environment Not Sourced
 
-### Problem
+#### Problem
 
 Commands cannot find ROS 2 packages.
-
 Example:
 
+```text
 ros2: command not found
 
 or:
 
 Package 'fr3_moveit_python' not found
+```
 
-## Cause
+#### Cause
 
 ROS 2 environment is not loaded.
 
-## Solution
+#### Solution
 
 Source ROS 2:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
+```
 
 Source workspace:
 
+```bash
 source ~/franka_ros2_ws/install/setup.bash
 ```
+
 To automatically source:
 
 ```bash
 echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 ```
-2. Workspace Build Failed
-Problem
-colcon build fails.
+
+### 2. Workspace Build Failed
+
+#### Problem
+
+`colcon build` fails.
+
 Example:
 
+```text
 Failed <<< fr3_moveit_python
-Possible Causes
-Missing dependencies
-Incorrect package structure
-Python syntax error
-Wrong ROS 2 package format
-Solution
+```
+
+#### Possible Causes
+
+- Missing dependencies
+- Incorrect package structure
+- Python syntax error
+- Wrong ROS 2 package format
+
+#### Solution
 
 Install dependencies:
 
 ```bash
 cd ~/franka_ros2_ws
-
 rosdep install \
 --from-paths src \
 --ignore-src \
 -r -y
 ```
+
 Clean build:
+
 ```bash
 rm -rf build install log
 ```
+
 Rebuild:
+
 ```bash
 colcon build --symlink-install
 ```
-3. Python Package Structure Incorrect
-Problem: ROS 2 cannot find the Python node.
+
+### 3. Python Package Structure Incorrect
+
+#### Problem
+
+ROS 2 cannot find the Python node.
 
 Make sure:
+
 ```bash
 chmod +x fr3_moveit_python/cartesian_move.py
 ```
-4. Python Node Not Installed as ROS 2 Executable
-Problem
+
+### 4. Python Node Not Installed as ROS 2 Executable
+
+#### Problem
+
 Command:
+
 ```bash
 ros2 pkg executables fr3_moveit_python
 ```
+
 does not show:
-```bash
+
+```text
 cartesian_move
-Cause
 ```
+
+#### Cause
+
 Missing entry_points in setup.py.
 
-Solution
+#### Solution
 
 Add:
+
 ```bash
 entry_points={
     'console_scripts': [
@@ -99,516 +129,690 @@ entry_points={
     ],
 },
 ```
+
 Rebuild:
+
 ```bash
 colcon build --symlink-install
 ```
-5. Launch File Not Installed
-Problem
+
+### 5. Launch File Not Installed
+
+#### Problem
 
 Running:
+
 ```bash
 ros2 launch fr3_moveit_python cartesian_move.launch.py
 ```
+
 returns:
-
 file not found
-Cause
-
+**Cause:**
 Launch file is not included in package installation.
 
-Solution
+#### Solution
 
-Check setup.py:
-```bash
+Check `setup.py`:
+
+```python
 data_files=[
-(
-'share/fr3_moveit_python/launch',
-[
-'launch/cartesian_move.launch.py'
-]
-)
+    (
+        'share/fr3_moveit_python/launch',
+        [
+            'launch/cartesian_move.launch.py'
+        ]
+    )
 ]
 ```
+
 Rebuild:
+
 ```bash
 colcon build --symlink-install
 ```
+
 Verify:
 
+```bash
 ls install/fr3_moveit_python/share/fr3_moveit_python/launch
+```
 
-6. MoveIt Package Not Found
-Error:
+### 6. MoveIt Package Not Found
+
+#### Error
+
+```text
 Package 'franka_fr3_moveit_config' not found
-Cause:
+```
+
+#### Cause
 
 Official Franka MoveIt package is not built or sourced.
 
-Solution
+#### Solution
 
 Check:
+
 ```bash
 ros2 pkg list | grep franka_fr3_moveit_config
 ```
+
 Build:
+
 ```bash
 colcon build \
 --packages-select franka_fr3_moveit_config
 ```
+
 Source:
+
 ```bash
 source install/setup.bash
 ```
-7. Missing MoveItPy Dependency
-Problem:
-- Python error:
-- ModuleNotFoundError:
-- No module named moveit
-Cause:
+
+### 7. Missing MoveItPy Dependency
+
+#### Problem
+
+```text
+Python error:
+ModuleNotFoundError:
+No module named moveit
+```
+
+#### Cause
+
 MoveIt 2 Python interface is missing.
 
-Solution
+#### Solution
+
 Install:
+
 ```bash
 sudo apt install \
 ros-jazzy-moveit
 ```
+
 Check:
+
 ```bash
 ros2 pkg list | grep moveit
 ```
-8. robot_description Not Loaded
-Problem
 
-MoveIt starts but cannot load robot model.
+### 8. `robot_description` Not Loaded
 
-Example: Robot model loading failed
-Cause:
+#### Problem
+
+MoveIt starts but cannot load the robot model.
+
+Example:
+
+```text
+Robot model loading failed
+```
+
+#### Cause
+
 Official Franka MoveIt configuration is not loaded correctly.
-
 Check:
+
 ```bash
 ros2 param list | grep robot_description
 ```
-Solution
-```bash
+
+#### Solution
+
 The launch file must load:
 
+```python
 .robot_description()
 ```
-from: franka_fr3_moveit_config
 
-9. robot_description_semantic Missing
-Problem
+from: `franka_fr3_moveit_config`
 
-Error:
-```bash
+### 9. `robot_description_semantic` Missing
 
+#### Problem
+
+#### Error
+
+```text
 Planning group fr3_arm does not exist
-Cause
 ```
+
+#### Cause
+
 SRDF is not loaded.
 
-Solution
+#### Solution
+
 ```bash
 Ensure:
-
 .robot_description_semantic()
 ```
+
 is included.
-
 The SRDF defines:
-```bash
-planning group
-end effector
-collision information
-```
-10. Controller Manager Not Available
-Problem:
 
-Error:
+- planning group
+- end effector
+- collision information
+
+### 10. Controller Manager Not Available
+
+#### Problem
+
+**Error:**
+
 ```
 Could not contact service:
 /controller_manager/list_controllers
 ```
-Cause: Franka hardware interface is not running.
+
+#### Cause
 
 Check:
+
 ```bash
 ros2 node list
 ```
-Expected:
-```bash
+
+**Expected:**
+
+```text
 /fr3/controller_manager
 ```
-Solution:
+
+#### Solution
 
 Launch Franka hardware:
+
 ```bash
 ros2 launch franka_bringup ...
 ```
-11. Controller Not Active
-Problem
+
+### 11. Controller Not Active
+
+#### Problem
 
 Planning works but execution fails.
-
 Check:
+
 ```bash
 ros2 control list_controllers
 ```
-Expected:
-```bash
+
+**Expected:**
+
+```text
 fr3_arm_controller active
 joint_state_broadcaster active
 franka_robot_state_broadcaster active
 ```
-Solution: Activate controller
+
+#### Solution
 
 ```bash
 ros2 control set_controller_state \
 fr3_arm_controller active
 ```
-12. /joint_states Missing
-Problem: MoveIt cannot plan.
+
+### 12. `/joint_states` Missing
+
+#### Problem
+
 Check:
+
 ```bash
 ros2 topic echo /joint_states
 ```
-Cause:
+
+#### Cause
 
 Joint state broadcaster is not running.
 
-Solution
+#### Solution
 
 Start:
 
+```text
 joint_state_broadcaster
+```
 
 and verify:
+
 ```bash
 ros2 topic list | grep joint
 ```
-13. libfranka Connection Timeout
-Problem
-```bash
+
+### 13. `libfranka` Connection Timeout
+
+#### Problem
+
+Reference:
+
+```text
 https://frankarobotics.github.io/docs/troubleshooting.html#running-a-libfranka-executable-fails-with-connection-timeout
 ```
-Error:
+
+#### Error
+
+```text
+libfranka: Connection timeout
+```
+
+#### Possible Causes
+
+- Wrong robot IP
+- Ethernet configuration incorrect
+- Robot not connected
+- FCI disabled
+
+#### Check
 
 ```bash
-libfranka: Connection timeout
-Possible Causes
-Wrong robot IP
-Ethernet configuration incorrect
-Robot not connected
-FCI disabled
-```
-Check:
 ping <robot_ip>
+```
 
 Example:
-```
+
+```bash
 ping 192.168.0.1
 ```
+
 PC should have:
 
+```text
 192.168.0.x
-14. Ethernet Configuration Problem
-Problem
+```
+
+### 14. Ethernet Configuration Problem
+
+#### Problem
 
 Robot cannot communicate with PC.
-
 Check network:
+
 ```bash
 ip a
 ```
-Find Ethernet interface:
 
+Find the Ethernet interface:
+
+```text
 enp0s31f6
+```
 
-Assign static IP if needed:
+Assign a static IP if needed.
 
 Example:
 
+```text
 PC:
 192.168.0.10
 
 Robot:
 192.168.0.1
-15. MoveIt Planning Works but Execution Fails
-Problem
+```
 
-Output:
+### 15. MoveIt Planning Works but Execution Fails
 
+#### Problem
+
+**Output:**
+
+```text
 Planning successful
 Action client not connected
-Cause
+```
+
+#### Cause
 
 DDS discovery delay.
 
-Solution
+#### Solution
 
 Add delay before execution:
+
 ```bash
 time.sleep(5)
-
 moveit.execute()
 ```
 
-16. Cartesian Motion Planning Failed (Moveit)
-Problem:
-```bash
+### 16. Cartesian Motion Planning Failed (MoveIt)
+
+#### Problem
+
+```text
 Cartesian path fraction = 0
-Possible Causes
-Target unreachable
-Wrong TCP link
-Collision
-Large displacement
 ```
-Solution
 
-Test small movement:
-dz:=-0.005
+#### Possible Causes
+
+- Target unreachable
+- Wrong TCP link
+- Collision
+- Large displacement
+
+#### Solution
+
+Test a small movement:
+
 ```bash
-ros2 launch fr3_moveit_python   cartesian_move.launch.py   dz:=-0.005   execute:=true
+ros2 launch fr3_moveit_python cartesian_move.launch.py \
+    dz:=-0.005 \
+    execute:=true
 ```
+
 before:
-dz:=-0.05
+
 ```bash
-ros2 launch fr3_moveit_python   cartesian_move.launch.py   dz:=-0.05   execute:=true
+ros2 launch fr3_moveit_python cartesian_move.launch.py \
+    dz:=-0.05 \
+    execute:=true
 ```
 
-17. Wrong ROS 2 Distribution
-Problem: Compilation errors related to:
+### 17. Wrong ROS 2 Distribution
+
+#### Problem
+
 ```bash
 hardware_interface
 controller_manager
 ```
-Cause:
+
+#### Cause
 
 Package versions do not match ROS distribution.
-
 Required:
-```bash
+
+```text
 Ubuntu 24.04
 ROS 2 Jazzy
 Franka ROS 2 Jazzy branch
 ```
+
 Check:
+
 ```bash
 echo $ROS_DISTRO
 ```
-Expected:
 
+**Expected:**
+
+```text
 jazzy
+```
 
-18. Clean Rebuild After Configuration Changes
+### 18. Clean Rebuild After Configuration Changes
 
 When changing:
+
 ```bash
 launch files
 setup.py
 package.xml
 MoveIt configuration
 ```
+
 perform:
+
 ```bash
-
 cd ~/franka_ros2_ws
-
 rm -rf build install log
-
 colcon build --symlink-install
-
 source install/setup.bash
 ```
-Debug Checklist
+
+## Debug Checklist
 
 Before running:
+
 ```bash
 ros2 launch fr3_moveit_python \
 cartesian_move.launch.py \
 dz:=-0.01 \
 execute:=true
 ```
-Verify:
-```bash
- ROS 2 Jazzy sourced
- Workspace sourced
- Package builds successfully
- Franka MoveIt config available
- Robot connected through Ethernet
- FCI enabled
- /joint_states publishing
- Controllers active
- MoveIt planning successful
- Small Cartesian motion tested first
 
+Verify:
+
+```text
+ROS 2 Jazzy sourced
+Workspace sourced
+Package builds successfully
+Franka MoveIt config available
+Robot connected through Ethernet
+FCI enabled
+/joint_states publishing
+Controllers active
+MoveIt planning successful
+Small Cartesian motion tested first
 ```
 
-July 16th: 
+---
 
-Quesion:
+## July 16 — Gripper Control Troubleshooting
 
+### Issue 1 — `gripper_control` Executable Not Found
+
+```bash
 ros2 run fr3_moveit_python gripper_control
-:No executable found
+```
 
+```text
+No executable found
+```
 
+```bash
 ros2 pkg executables fr3_moveit_python
+```
+
+```text
 fr3_moveit_python cartesian_move
+```
 
-Step 1: Check your setup.py
-
-Open:
-
-cd ~/franka_ros2_ws/src/fr3_moveit_python
-
-gedit setup.py
-
-Step 1: Check your setup.py
+#### Step 1: Check `setup.py`
 
 Open:
 
+```bash
 cd ~/franka_ros2_ws/src/fr3_moveit_python
-
 gedit setup.py
+```
 
 Find:
 
+```python
 entry_points={
     'console_scripts': [
         'cartesian_move = fr3_moveit_python.cartesian_move:main',
     ],
 },
+```
 
 Change it to:
 
+```python
 entry_points={
     'console_scripts': [
         'cartesian_move = fr3_moveit_python.cartesian_move:main',
         'gripper_control = fr3_moveit_python.gripper_control:main',
     ],
 },
+```
 
 Save.
 
-Step 2: Verify file name
+#### Step 2: Verify the File Name
 
 Check:
 
+```bash
 ls ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python
+```
 
 You should see:
 
+```text
 __init__.py
 cartesian_move.py
 gripper_control.py
+```
 
-Step 3: Rebuild only your package
+#### Step 3: Rebuild the Package
 
-Go to workspace:
+Go to the workspace:
 
+```bash
 cd ~/franka_ros2_ws
+```
 
 Build:
 
+```bash
 colcon build --packages-select fr3_moveit_python
+```
 
 You should see:
 
+```text
 Finished <<< fr3_moveit_python
+```
 
-Step 4: Source the new installation
+#### Step 4: Source the New Installation
 
 Important:
 
+```bash
 source install/setup.bash
+```
 
 or:
 
+```bash
 source ~/franka_ros2_ws/install/setup.bash
-tep 5: Check again
+```
+
+#### Step 5: Check the Registered Executables
 
 Run:
 
+```bash
 ros2 pkg executables fr3_moveit_python
+```
 
-Expected:
+**Expected:**
 
+```text
 fr3_moveit_python cartesian_move
 fr3_moveit_python gripper_control
-Step 6: Run your gripper
+```
 
-Before running, check the action exists:
+#### Step 6: Run the Gripper Node
 
+Before running, check that the action exists:
+
+```bash
 ros2 action list | grep gripper
+```
 
-Expected:
+**Expected:**
 
+```text
 /fr3_gripper/gripper_action
+```
 
 Then:
 
+```bash
 ros2 run fr3_moveit_python gripper_control
+```
 
+Check the action information:
 
-
+```bash
 ros2 action info /fr3_gripper/gripper_action
-
+```
 
 Expected to see:
 
+```text
 Action: franka_msgs/action/Grasp
+```
+
 or:
+
+```text
 Action: franka_msgs/action/Move
+```
 
-Actual:
+### Issue 2 — Verify the Gripper Action Server
 
+```text
 Action: /fr3_gripper/gripper_action
 Action clients: 1
     /moveit_simple_controller_manager
+```
+
 That means:
 
-/fr3_gripper/gripper_action exists in the ROS graph
-but nobody is actually providing the action server
-MoveIt is only acting as an action client
+- `/fr3_gripper/gripper_action` exists in the ROS graph.
+- Nobody is actually providing the action server.
+- MoveIt is only acting as an action client.
 
 Due to:
- ros2 action info /franka_gripper/move
+
+```text
+ros2 action info /franka_gripper/move
 Action: /franka_gripper/move
 Action clients: 0
 Action servers: 1
     /franka_gripper
-yujietang@yujietang-System-Product-Name:~/franka_ros2_ws$ ros2 action info /franka_gripper/grasp
+
+ros2 action info /franka_gripper/grasp
 Action: /franka_gripper/grasp
 Action clients: 0
 Action servers: 1
     /franka_gripper
-yujietang@yujietang-System-Product-Name:~/franka_ros2_ws$ ros2 action info /franka_gripper/move
+
+ros2 action info /franka_gripper/move
 Action: /franka_gripper/move
 Action clients: 0
 Action servers: 1
     /franka_gripper
+```
 
-THus
- from control_msgs.action import GripperCommand >>>  from franka_msgs.action import Move
+Thus:
 
+```python
+from control_msgs.action import GripperCommand
+```
 
+should be changed to:
 
+```python
+from franka_msgs.action import Move
+```
 
+```text
 ros2 run fr3_moveit_python gripper_control
 AttributeError: 'Move_Result' object has no attribute 'current_width'
 [ros2run]: Process exited with failure 1
+```
 
-In ROS 2 actions, the structure is:
+#### ROS 2 Action Message Structure
 
 Goal
----
-Result
----
-Feedback
 
+---
+
+**Result:**
+
+---
+
+Feedback
 
 ```bash
 ros2 interface show franka_msgs/action/Move
@@ -621,26 +825,35 @@ string error
 float64 current_width # [m]
 ```
 
-float64 current_width is feedback, not result.
+`float64 current_width` is feedback, not a result field.
+The code incorrectly does:
 
-
-e incorrectly does:
-
+```python
 result.current_width
-but result only contains:
+```
 
+but the result only contains:
+
+```text
 bool success
 string error
-he important part:
+```
 
+The important part:
+
+```text
 AttributeError: 'Move_Result' object has no attribute 'current_width'
+```
 
-means your installed franka_msgs/action/Move does not contain current_width in the result message, even though your earlier:
+means your installed `franka_msgs/action/Move` does not contain `current_width` in the result message, even though the earlier command:
 
+```bash
 ros2 interface show franka_msgs/action/Move
+```
 
 showed:
 
+```text
 float64 width
 float64 speed
 ---
@@ -648,131 +861,145 @@ bool success
 string error
 ---
 float64 current_width
+```
 
 In ROS 2 actions, the structure is:
 
+```text
 Goal
 ---
 Result
 ---
 Feedback
+```
 
 The last section:
 
+```text
 float64 current_width
+```
 
 is feedback, not result.
 
-Your code incorrectly does:
+The code incorrectly does:
 
+```python
 result.current_width
+```
 
-but result only contains:
+but the result only contains:
 
+```text
 bool success
 string error
-Fix your code
+```
+
+#### Fix the Result Handling
 
 Replace:
 
+```python
 if result.success:
-
     self.get_logger().info(
         f"Gripper reached {result.current_width:.3f} m"
     )
+```
 
 with:
 
+```python
 if result.success:
-
     self.get_logger().info(
         "Gripper motion completed successfully."
     )
-
 else:
-
     self.get_logger().error(
         result.error
     )
-If you want to display current width
+```
+
+#### Read the Current Width Through Feedback
 
 You need to use feedback.
-
 Change:
 
+```python
 future = self.client.send_goal_async(goal)
+```
 
 to:
 
+```python
 future = self.client.send_goal_async(
     goal,
     feedback_callback=self.feedback_callback
 )
+```
 
-Add this function inside your class:
+Add this function inside the class:
 
+```python
 def feedback_callback(self, feedback_msg):
-
     feedback = feedback_msg.feedback
 
     self.get_logger().info(
         f"Current width: {feedback.current_width:.3f} m"
     )
+```
 
 Now you will see:
 
+```text
 Current width: 0.073 m
 Current width: 0.041 m
 Current width: 0.012 m
+```
 
 during motion.
 
-Then rebuild
+Then rebuild:
+
+```bash
 cd ~/franka_ros2_ws
-
 colcon build --packages-select fr3_moveit_python
-
 source install/setup.bash
+```
 
 Run:
 
+```bash
 ros2 run fr3_moveit_python gripper_control
+```
 
-Expected:
+**Expected:**
 
+```text
 [INFO] Connected to Franka gripper.
 [INFO] Gripper goal accepted
 [INFO] Gripper motion completed successfully.
+```
 
+---
 
+### Minimal ROS 2 Node Structure
 
-```bash
+```python
 import rclpy
 from rclpy.node import Node
-
-
 class RobotMotion(Node):
-
     def __init__(self):
         super().__init__("robot_motion")
         print("Robot node started")
-
-
 def main():
-
     rclpy.init()
-
     robot = RobotMotion()
-
     rclpy.spin(robot)
-
     rclpy.shutdown()
-
-
 if __name__ == "__main__":
     main()
 ```
-```bash
+
+```text
 Python file
 │
 ├── import libraries
@@ -791,68 +1018,75 @@ Python file
 
 ---
 
+## July 19 — Troubleshooting Log
 
-### July 19th — Troubleshooting Log
+### Issue
 
-### Issue:
 'GripperController' object has no attribute 'open_gripper'
 
-### Symptom:
+### Symptom
 
 Running pick-place related code produced:
-
 AttributeError:
-
 'GripperController' object has no attribute 'open_gripper'
-
 However, the function existed in the source file.
 
+### Investigation
 
-### Investigation:
-### Step 1: Check installed package version
+#### Step 1: Check the Installed Package Version
 
 Command:
+
 ```bash
 grep -n "open_gripper" \
 ~/franka_ros2_ws/install/fr3_moveit_python/lib/python3.12/site-packages/fr3_moveit_python/gripper_control.py
 ```
 
-Output:
+**Output:**
+
 ```bash
 110:    def open_gripper(self):
 142:    gripper.open_gripper()
 ```
 
-### Step 2: Compare source workspace
+#### Step 2: Compare the Source Workspace
 
 Command:
+
 ```bash
 grep -n "def open_gripper" \
 ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/gripper_control.py
 ```
-Output:
 
+**Output:**
+
+```text
 110:    def open_gripper:
+```
 
-Conclusion:
+**Conclusion:**
 
 The function existed in both:
-```bash
+
+```text
 src/      and       install/
 ```
+
 Therefore, the issue was not missing code.
 
 ### Root Cause Analysis
 
-### Cause 1: Mixed workspace / wrong environment
+#### Cause 1: Mixed Workspace or Wrong Environment
 
 Possible reasons:
+
 ```bash
 - Multiple ROS2 workspaces exist.
 - Terminal sourced another workspace.
 - ROS executed an old installed package.
 - Workspace was not sourced after rebuilding.
 ```
+
 Verification:
 
 ```bash
@@ -861,147 +1095,165 @@ ros2 pkg executables fr3_moveit_python
 which python3
 echo $PYTHONPATH
 ```
+
 Send message:
+
 ```bash
 ros2 action send_goal \
 /franka_gripper/move \
 franka_msgs/action/Move \
 "{width: 0.00, speed: 0.05}"
 ```
+
 Result: Action server confirmed working.
 
-Final Debugging Procedure
-1. Verify hardware interface
-```bash
-ros2 action list
-```
-3. Test official gripper command
-```bash
-ros2 action send_goal \
-/franka_gripper/move \
-franka_msgs/action/Move \
-"{width: 0.00, speed: 0.05}"
-```
-5. Verify package location
-```bash
-ros2 pkg prefix fr3_moveit_python
-```
-7. Verify executable registration
-```bash
-ros2 pkg executables fr3_moveit_python
-```
-9. Check Python entry point
-```bash
-cat setup.py ( franka_ros2_ws/fr3_moveit_python/setup.py
-```
-Confirm:
-```bash
-gripper_control =
-fr3_moveit_python.gripper_control:main
-```
-6. Rebuild workspace
-```bash
-colcon build --symlink-install
-source install/setup.bash
-```
-7. Run test node
-```bash
-ros2 run fr3_moveit_python gripper_control
-```
+### Final Debugging Procedure
+
+1. Verify the hardware interface:
+
+   ```bash
+   ros2 action list
+   ```
+
+2. Test the official gripper command:
+
+   ```bash
+   ros2 action send_goal \
+   /franka_gripper/move \
+   franka_msgs/action/Move \
+   "{width: 0.00, speed: 0.05}"
+   ```
+
+3. Verify the package location:
+
+   ```bash
+   ros2 pkg prefix fr3_moveit_python
+   ```
+
+4. Verify executable registration:
+
+   ```bash
+   ros2 pkg executables fr3_moveit_python
+   ```
+
+5. Check the Python entry point:
+
+   ```bash
+   cat ~/franka_ros2_ws/src/fr3_moveit_python/setup.py
+   ```
+
+   Confirm:
+
+   ```text
+   gripper_control =
+   fr3_moveit_python.gripper_control:main
+   ```
+
+6. Rebuild the workspace:
+
+   ```bash
+   colcon build --symlink-install
+   source install/setup.bash
+   ```
+
+7. Run the test node:
+
+   ```bash
+   ros2 run fr3_moveit_python gripper_control
+   ```
 
 ---
 
+## MoveItPy Planning Scene Monitor Issue
 
-Question:
-Could not find parameter robot_description_semantic
+### Error
 
-Original code:
+`Could not find parameter robot_description_semantic`
+
+### Original Code
 
 ```bash
 def main():
     rclpy.init()
-
     moveit = MoveItPy(
         node_name="pick_place"
     )
-
     arm = moveit.get_planning_component(
         "fr3_arm"
     )
-
     robot_model = moveit.get_robot_model()
-
     robot_state = RobotState(
         robot_model
     )
-
     arm.set_start_state(
         robot_state
     )
 ```
 
+```text
+moveit = MoveItPy(
+[pick_place-1] RuntimeError: Unable to configure planning scene monitor
+```
 
- moveit = MoveItPy(
-[pick_place-1] RuntimeError: Unable to configure planning scene monitor)
+### Cause
 
-Cause:
 the wrong way for moveit.py
 
-Example: 
+### Reference Example
 
 ```bash
 import rclpy
 from moveit.planning import MoveItPy
-
 # Initialize ROS 2
 rclpy.init()
-
 # Instantiate MoveItPy for the current ROS 2 node/context
 moveit_py = MoveItPy(node_name="moveit_py_example")
-
 # Get the planning component for a pre-defined manipulator arm (e.g., "panda_arm")
 panda_arm = moveit_py.get_planning_component("panda_arm")
-
 # Plan to a joint space goal
 panda_arm.set_goal_state(configuration_name="ready")
 plan_result = panda_arm.plan()
-
 # Execute the planned trajectory if planning was successful
 if plan_result:
     moveit_py.execute(plan_result.trajectory)
-
 rclpy.shutdown()
 ```
 
-## July 20th:
+---
 
+## July 20 — Initial MoveItPy API and OMPL Notes
+
+### Error
+
+```text
 TypeError: set_goal_state(): incompatible function arguments
+```
 
- 
-    # ==========================
-    # OMPL
-    # ==========================
+```python
+# ==========================
+# OMPL
+# ==========================
 
-    ompl_yaml = load_yaml(
-        "franka_fr3_moveit_config",
-        "config/ompl_planning.yaml",
-    )
+ompl_yaml = load_yaml(
+    "franka_fr3_moveit_config",
+    "config/ompl_planning.yaml",
+)
 
-    ompl = {
-        "planning_plugins": [
-            "ompl_interface/OMPLPlanner",
-        ]
-    }
-    ompl.update(ompl_yaml)
+ompl = {
+    "planning_plugins": [
+        "ompl_interface/OMPLPlanner",
+    ]
+}
+ompl.update(ompl_yaml)
+```
 
-----
+---
 
-## July 20th — MoveItPy Execution Pipeline Debugging Log
+## July 20 — MoveItPy Execution Pipeline Debugging Log
 
 ### Issue
 
 MoveItPy could successfully generate a motion plan, but trajectory execution was initially rejected by `fr3_arm_controller`.
-
 Main failure:
 
 ```text
@@ -1010,7 +1262,7 @@ Goal was rejected by server
 Completed trajectory execution with status ABORTED
 ```
 
-The problem was not mainly in the high-level task logic.  
+The problem was not mainly in the high-level task logic.
 The debugging focus was the connection between:
 
 ```text
@@ -1070,7 +1322,6 @@ JointTrajectoryController
 ### Symptom 1 — MoveItPy API Usage Error
 
 The first issue was caused by incompatible MoveItPy API usage.
-
 Observed error:
 
 ```text
@@ -1078,7 +1329,6 @@ TypeError: set_start_state(): incompatible function arguments
 ```
 
 The start state was originally passed with an incompatible argument format.
-
 The corrected approach was to use the planning component's current state interface:
 
 ```text
@@ -1091,7 +1341,6 @@ Do not directly call get_current_state() from RobotModel.
 ### Symptom 2 — Goal State Format Error
 
 A second API error occurred when setting the goal state.
-
 Observed error:
 
 ```text
@@ -1099,7 +1348,6 @@ TypeError: set_goal_state(): incompatible function arguments
 ```
 
 The issue was caused by passing joint targets in an unsupported format.
-
 The corrected approach was:
 
 ```text
@@ -1147,7 +1395,7 @@ Command:
 ros2 control list_controllers
 ```
 
-Result:
+**Result:**
 
 ```text
 fr3_arm_controller             joint_trajectory_controller/JointTrajectoryController       active
@@ -1155,7 +1403,7 @@ joint_state_broadcaster        joint_state_broadcaster/JointStateBroadcaster    
 franka_robot_state_broadcaster franka_robot_state_broadcaster/FrankaRobotStateBroadcaster  active
 ```
 
-Conclusion:
+**Conclusion:**
 
 ```text
 fr3_arm_controller was active.
@@ -1173,7 +1421,7 @@ Command:
 ros2 action list -t | grep FollowJointTrajectory
 ```
 
-Result:
+**Result:**
 
 ```text
 /fr3_arm_controller/follow_joint_trajectory [control_msgs/action/FollowJointTrajectory]
@@ -1185,17 +1433,16 @@ Command:
 ros2 action info /fr3_arm_controller/follow_joint_trajectory
 ```
 
-Result:
+**Result:**
 
 ```text
 Action clients: 1
     /moveit_simple_controller_manager
-
 Action servers: 1
     /fr3_arm_controller
 ```
 
-Conclusion:
+**Conclusion:**
 
 ```text
 MoveIt could see the FollowJointTrajectory action server.
@@ -1214,14 +1461,14 @@ ros2 param get /fr3_arm_controller command_interfaces
 ros2 param get /fr3_arm_controller state_interfaces
 ```
 
-Result:
+**Result:**
 
 ```text
 String values are: ['effort']
 String values are: ['position', 'velocity']
 ```
 
-Conclusion:
+**Conclusion:**
 
 ```text
 fr3_arm_controller uses effort command interface and position/velocity state interfaces.
@@ -1251,7 +1498,7 @@ fr3_joint6/effort [available] [claimed]
 fr3_joint7/effort [available] [claimed]
 ```
 
-Conclusion:
+**Conclusion:**
 
 ```text
 The arm controller successfully claimed all seven FR3 effort interfaces.
@@ -1269,7 +1516,7 @@ Command:
 ros2 topic echo /joint_states --once
 ```
 
-Result:
+**Result:**
 
 ```text
 name:
@@ -1284,7 +1531,7 @@ name:
 - fr3_finger_joint2
 ```
 
-Conclusion:
+**Conclusion:**
 
 ```text
 /joint_states contained all required FR3 arm joints.
@@ -1297,7 +1544,6 @@ Therefore, MoveIt had access to the current robot state.
 ### Investigation 6 — Direct Controller Action Test
 
 A direct action goal was sent to `fr3_arm_controller`.
-
 Command:
 
 ```bash
@@ -1306,14 +1552,14 @@ control_msgs/action/FollowJointTrajectory \
 "{trajectory: {joint_names: ['fr3_joint1', 'fr3_joint2', 'fr3_joint3', 'fr3_joint4', 'fr3_joint5', 'fr3_joint6', 'fr3_joint7'], points: [{positions: [-0.125, -0.114, 0.340, -1.512, -0.050, 1.434, -2.302], velocities: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], time_from_start: {sec: 5, nanosec: 0}}]}}"
 ```
 
-Result:
+**Result:**
 
 ```text
 Goal successfully reached!
 Goal finished with status: SUCCEEDED
 ```
 
-Conclusion:
+**Conclusion:**
 
 ```text
 fr3_arm_controller, action server, hardware interface, FCI connection, and real robot execution path were working correctly.
@@ -1326,7 +1572,6 @@ This isolated the issue to the MoveItPy launch/planning configuration rather tha
 ### Root Cause Analysis
 
 The direct controller action succeeded, but MoveItPy trajectory execution was rejected.
-
 Therefore, the issue was not caused by:
 
 ```text
@@ -1340,7 +1585,6 @@ robot hardware failure
 ```
 
 The issue was caused by incomplete MoveIt planning and execution configuration in the custom launch file.
-
 The earlier warning was:
 
 ```text
@@ -1349,7 +1593,6 @@ No planning response adapter names specified.
 ```
 
 This indicated that the planning pipeline was not fully configured.
-
 MoveIt could generate a geometric plan, but the trajectory was not correctly prepared for controller execution.
 
 ---
@@ -1388,26 +1631,21 @@ ompl_yaml = load_yaml(
     "franka_fr3_moveit_config",
     "config/ompl_planning.yaml",
 )
-
 ompl = {}
 ompl.update(ompl_yaml)
-
 ompl.update({
     "planning_plugin": "ompl_interface/OMPLPlanner",
-
     "request_adapters": (
         "default_planning_request_adapters/ResolveConstraintFrames "
         "default_planning_request_adapters/ValidateWorkspaceBounds "
         "default_planning_request_adapters/CheckStartStateBounds "
         "default_planning_request_adapters/CheckStartStateCollision"
     ),
-
     "response_adapters": (
         "default_planning_response_adapters/AddTimeOptimalParameterization "
         "default_planning_response_adapters/ValidateSolution "
         "default_planning_response_adapters/DisplayMotionPath"
     ),
-
     "start_state_max_bounds_error": 0.1,
 })
 ```
@@ -1429,7 +1667,6 @@ Plan request parameters were also completed:
 ### Final Result
 
 After fixing the MoveItPy API usage and the custom launch configuration, trajectory execution succeeded.
-
 Final successful behavior:
 
 ```text
@@ -1468,18 +1705,18 @@ Franka FR3
 Verified components:
 
 ```text
-FR3 hardware connection                    
-Franka FCI                                 
-ROS 2 Jazzy environment                    
-MoveIt 2 configuration                     
-MoveItPy API usage                         
-OMPL planner loading                       
-fr3_arm planning group                     
-Joint trajectory generation                
-FollowJointTrajectory action connection    
-fr3_arm_controller execution              
-Effort interface control                   
-Real robot motion execution                
+FR3 hardware connection
+Franka FCI
+ROS 2 Jazzy environment
+MoveIt 2 configuration
+MoveItPy API usage
+OMPL planner loading
+fr3_arm planning group
+Joint trajectory generation
+FollowJointTrajectory action connection
+fr3_arm_controller execution
+Effort interface control
+Real robot motion execution
 ```
 
 ---
@@ -1508,7 +1745,6 @@ real robot FCI connection
 ```
 
 The final fix was not mainly in the high-level task script.
-
 The critical fix was in the custom MoveIt launch configuration.
 
 ---
@@ -1528,14 +1764,16 @@ The critical fix was in the custom MoveIt launch configuration.
 
 ---
 
-### July 21 — MoveItPy Arm Execution Mistakes Log
+## July 21 — MoveItPy Arm Execution Mistakes Log
 
 ### Topic
+
 Franka FR3 arm execution using **MoveItPy**, **OMPL**, and `fr3_arm_controller`.
-Gripper integration is postponed.  
+Gripper integration is postponed.
 This log focuses only on the FR3 arm motion pipeline.
 
 ### Goal
+
 Verify that a planned trajectory from MoveItPy can be executed on the real Franka FR3 arm.
 Target execution chain:
 
@@ -1558,25 +1796,25 @@ libfranka / FCI
     ↓
 Franka FR3
 ```
+
 ### Mistake 1 — Wrong Current State Usage
-Problem:
+
+**Problem:**
  get the live robot state from RobotModel.
-
-Error
+**Error:**
 AttributeError: 'moveit.core.robot_model.RobotModel' object has no attribute 'get_current_state'
-Fix
-
+**Fix:**
 RobotModel only describes the robot model.
 The current robot state should be handled through the MoveItPy planning component.
 
 ### Mistake 2 — Wrong Goal State Format
-Problem:
+
+**Problem:**
 The goal joint positions were passed in an unsupported MoveItPy format.
-
-Fix:
+**Fix:**
 Use a RobotState object and set joint group positions with a numpy.ndarray.
+**Concept:**
 
-Concept:
 ```bash
 RobotState
     ↓
@@ -1584,118 +1822,125 @@ set_joint_group_positions()
     ↓
 set_goal_state()
 ```
-### Mistake 3 — Misdiagnosing Execution Failure as Hardware Failure
-Problem:
 
+### Mistake 3 — Misdiagnosing Execution Failure as Hardware Failure
+
+**Problem:**
 MoveItPy planning succeeded, but execution failed:
+
 ```bash
 Goal request rejected
 Goal was rejected by server
 Completed trajectory execution with status ABORTED
 ```
+
 At first, this looked like a controller or hardware issue.
-
-Verification
-
+**Verification:**
 The following items were checked:
-```bash
-- fr3_arm_controller active                         
-- FollowJointTrajectory action server available     
-- MoveIt action client connected                    
-- FR3 effort interfaces claimed                     
-- /joint_states publishing FR3 joints               
-```
-A direct FollowJointTrajectory command was tested.
 
-Result:
 ```bash
+- fr3_arm_controller active
+- FollowJointTrajectory action server available
+- MoveIt action client connected
+- FR3 effort interfaces claimed
+- /joint_states publishing FR3 joints
+```
+
+A direct FollowJointTrajectory command was tested.
+**Result:**
+
+```text
 Goal successfully reached
 Goal finished with status: SUCCEEDED
-Conclusion
 ```
-The FR3 controller, FCI connection, hardware interface, and real robot execution path were working.
 
+**Conclusion:**
+
+The FR3 controller, FCI connection, hardware interface, and real robot execution path were working.
 The problem was on the MoveIt configuration side.
 
 ### Mistake 4 — Wrong OMPL Plugin Parameter
-Problem:
 
+**Problem:**
 The custom launch file used the wrong OMPL plugin parameter name.
+**Wrong:**
 
-Wrong:
 ```bash
 planning_plugins
 ```
-Correct:
+
+**Correct:**
+
 ```bash
 planning_plugin
 ```
-Error:
+
+**Error:**
 Planning plugin name is empty or not defined in namespace 'ompl'
-Fix
-
+**Fix:**
 Use the correct singular parameter:
-
 planning_plugin: ompl_interface/OMPLPlanner
 
 ### Mistake 5 — Missing Planning Adapters for Time Sequence
-Problem
 
+**Problem:**
 MoveIt could generate a geometric path, but the trajectory was not properly prepared for real controller execution.
-
 Planning success alone does not guarantee valid trajectory timing.
-
 The controller needs:
-
 time_from_start
 velocity
 acceleration
 valid trajectory timing
-Fix
-
+**Fix:**
 Add planning response adapters, especially:
+
 ```
 default_planning_response_adapters/AddTimeOptimalParameterization
 ```
-Purpose
 
+**Purpose:**
 AddTimeOptimalParameterization converts the geometric path into a time-parameterized trajectory.
-
 Without this adapter, fr3_arm_controller may reject the goal even when OMPL planning succeeds.
 
 ### Mistake 6 — Missing Velocity and Acceleration Scaling
-Problem:
 
+**Problem:**
 The launch file did not define:
-
 max_velocity_scaling_factor
 max_acceleration_scaling_factor
-Fix
-
+**Fix:**
 Add safe velocity and acceleration scaling parameters for real robot execution.
-
 Example values:
-```bash
+
+```yaml
 max_velocity_scaling_factor: 0.05
 max_acceleration_scaling_factor: 0.05
-Mistake 7 — Misleading Execution Output
 ```
-Problem
+
+### Mistake 7 — Misleading Execution Output
+
+**Problem:**
 
 The script printed:
 
+```text
 Execution finished
+```
 
 even when MoveIt reported:
 
+```text
 Completed trajectory execution with status ABORTED
-Fix
+```
+
+**Fix:**
 
 Only print execution success after checking the actual execution result.
 
-Final Fix Summary
+### Final Fix Summary
 
 The critical fixes were:
+
 ```bash
 Correct MoveItPy API usage
 Correct OMPL plugin parameter
@@ -1705,43 +1950,44 @@ Add time-parameterization adapter
 Add velocity and acceleration scaling
 Verify controller using direct FollowJointTrajectory action
 ```
-Final Result
+
+### Final Result
 
 After fixing the MoveItPy usage and custom launch configuration, the full execution pipeline succeeded.
-
 Successful result:
+
 ```bash
 Calling Planner 'OMPL'
 Goal request accepted
 Controller 'fr3_arm_controller' successfully finished
 Completed trajectory execution with status SUCCEEDED
 ```
-Final Lesson:
+
+### Final Lesson
+
 ```bash
 Planning success does not guarantee execution success.
-
 For real Franka FR3 execution, both must be correct:
-
 MoveItPy planning logic +
 MoveIt launch / OMPL plugin / adapter configuration
-
 The main problem was not the robot hardware.
-
 The main problem was incomplete MoveIt launch configuration, especially:
-
 planning_plugin +
 AddTimeOptimalParameterization
 ```
-Current Status:
-MoveItPy arm planning working                      
-fr3_arm_controller verified                        
-Direct FollowJointTrajectory test succeeded        
-OMPL plugin configuration fixed                    
-Trajectory time-parameterization added             
-MoveItPy arm execution succeeded                   
-Gripper integration postponed           
 
-Next Actions:
+### Current Status
+
+MoveItPy arm planning working
+fr3_arm_controller verified
+Direct FollowJointTrajectory test succeeded
+OMPL plugin configuration fixed
+Trajectory time-parameterization added
+MoveItPy arm execution succeeded
+Gripper integration postponed
+
+### Next Actions
+
 ```bash
 1. Clean up the custom MoveIt launch file.
 2. Keep direct FollowJointTrajectory command as a hardware test.
@@ -1752,13 +1998,12 @@ Next Actions:
 7. Update Troubleshooting.md with the OMPL plugin and adapter issue.
 ```
 
-### July 20 — MoveItPy Arm Execution Development Log
+## July 20 — MoveItPy Arm Execution Development Log
 
 ### Goal
 
 Verify that the Franka FR3 arm can execute a planned trajectory through **MoveItPy**, **OMPL**, and `fr3_arm_controller`.
-
-Gripper integration is postponed.  
+Gripper integration is postponed.
 Today focuses only on the arm execution pipeline.
 
 ---
@@ -1783,75 +2028,81 @@ franka_hardware
 libfranka / FCI
     ↓
 Franka FR3
-Initial Problem
+```
+
+### Initial Problem
 
 MoveItPy could generate a plan, but execution was rejected by the controller.
 
+```text
 Goal request rejected
 Goal was rejected by server
 Completed trajectory execution with status ABORTED
+```
 
 This means:
 
 Planning succeeded, but trajectory execution failed.
-Verification
+
+### Verification
 
 The robot-side execution pipeline was checked first.
-
 Verified results:
 
-- fr3_arm_controller active                         
-- FollowJointTrajectory action server available     
-- MoveIt action client connected                    
-- FR3 effort command interfaces claimed             
-- /joint_states publishing FR3 joints               
-- Direct FollowJointTrajectory command succeeded    
-
+- `fr3_arm_controller` active
+- `FollowJointTrajectory` action server available
+- MoveIt action client connected
+- FR3 effort command interfaces claimed
+- `/joint_states` publishing FR3 joints
+- Direct `FollowJointTrajectory` command succeeded
 A direct action command to fr3_arm_controller succeeded, proving that the controller, FCI, hardware interface, and real robot were working.
-
 Therefore, the issue was not the robot hardware.
 
-Root Cause
+### Root Cause
 
 The main issue was in the custom MoveIt launch configuration.
-
 The OMPL planning plugin and planning adapters were not configured correctly.
-
 Main plugin bug:
-```bash
+
+```text
 planning_plugins    wrong
 planning_plugin     correct
 ```
+
 The wrong parameter caused:
 
+```text
 Planning plugin name is empty or not defined in namespace 'ompl'
-Adapter / Time Sequence Fix
+```
+
+### Adapter and Time-Sequence Fix
 
 MoveIt planning success only means OMPL found a geometric path.
 
 For real controller execution, the trajectory also needs a valid time sequence:
 
-time_from_start
-velocity
-acceleration
-trajectory timing
+- `time_from_start`
+- velocity
+- acceleration
+- trajectory timing
 
 This requires planning response adapters.
 
 Important adapter:
 
+```text
 default_planning_response_adapters/AddTimeOptimalParameterization
+```
 
-Purpose:
+**Purpose:**
 
-AddTimeOptimalParameterization converts the planned path into a time-parameterized trajectory.
+`AddTimeOptimalParameterization` converts the planned path into a time-parameterized trajectory.
 
-Without this adapter, MoveIt may generate a path, but fr3_arm_controller can reject the goal because the trajectory is not properly timed.
+Without this adapter, MoveIt may generate a path, but `fr3_arm_controller` can reject the goal because the trajectory is not properly timed.
 
-Launch Configuration Fix
+### Launch Configuration Fix
 
 The custom launch file was updated to include:
-
 OMPL planning plugin
 request adapters
 response adapters
@@ -1859,29 +2110,28 @@ velocity scaling
 acceleration scaling
 controller configuration
 trajectory execution configuration
-
 Key configuration:
+
 ```bash
 ompl.update({
     "planning_plugin": "ompl_interface/OMPLPlanner",
-
     "request_adapters": (
         "default_planning_request_adapters/ResolveConstraintFrames "
         "default_planning_request_adapters/ValidateWorkspaceBounds "
         "default_planning_request_adapters/CheckStartStateBounds "
         "default_planning_request_adapters/CheckStartStateCollision"
     ),
-
     "response_adapters": (
         "default_planning_response_adapters/AddTimeOptimalParameterization "
         "default_planning_response_adapters/ValidateSolution "
         "default_planning_response_adapters/DisplayMotionPath"
     ),
-
     "start_state_max_bounds_error": 0.1,
 })
 ```
+
 Plan request parameters were also completed:
+
 ```bash
 "plan_request_params": {
     "planning_pipeline": "ompl",
@@ -1891,5 +2141,4 @@ Plan request parameters were also completed:
     "max_acceleration_scaling_factor": 0.05,
 }
 ```
-
 
