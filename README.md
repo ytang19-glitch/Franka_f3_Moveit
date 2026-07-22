@@ -1,6 +1,7 @@
-## Franka_f3_Moveit
 
-### Franka FR3 MoveIt Cartesian Motion Demo
+# Franka_f3_Moveit
+
+## Franka FR3 MoveIt Cartesian Motion Demo
 
 ### Goal
 
@@ -11,10 +12,12 @@ The target demo is simple:
 ```text
 Move the FR3 end-effector downward by x cm using MoveIt
 ```
+
 The purpose is to verify that the MoveIt pipeline can communicate correctly with the Franka ROS 2 controller and execute a Cartesian trajectory on the robot.
 
 ---
-### Step 1 ; Ros2 Package
+
+## Step 1 ; Ros2 Package
 
 ### Creating the `fr3_moveit_python` Package
 
@@ -190,14 +193,14 @@ ros2 launch fr3_moveit_python \
     dz:=-0.05 \
     execute:=true
 ```
+
 ---
 
-### Summary
+## Summary
 
 The Cartesian motion demo uses MoveIt as the high-level planning layer between the Python command and the Franka hardware
 
-
-#### Step 1 ; Workflow
+### Step 1 ; Workflow
 
 ```text
 Create ROS2 package
@@ -221,8 +224,7 @@ Source the workspace
 Launch the Cartesian motion node
 ```
 
-
-#### Step 2 ; System Overview
+### Step 2 ; System Overview
 
 The control flow is:
 
@@ -250,7 +252,7 @@ This is different from directly commanding the hardware interface.
 
 ---
 
-### Why Not Directly Use `command_interface`?
+#### Why Not Directly Use `command_interface`?
 
 The Franka controller uses a low-level hardware command interface, such as `effort`.
 
@@ -294,7 +296,7 @@ It is not the correct level for directly sending Cartesian motion commands.
 
 ---
 
-### Why Create a Custom Launch File and Python Node?
+#### Why Create a Custom Launch File and Python Node?
 
 The official Franka MoveIt launch file starts the MoveIt system and loads the required robot configuration.
 
@@ -315,19 +317,20 @@ Python file         → send Cartesian motion request
 
 ---
 
-### Check Official Franka MoveIt Configuration
+#### Check Official Franka MoveIt Configuration
 
 Before writing the custom launch file, inspect the official Franka MoveIt launch file.
 
-#### Find the official MoveIt launch file
+##### Find the official MoveIt launch file
 
 ```bash
 cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/launch
 nano ~/franka_ros2_ws/src/franka_fr3_moveit_config/launch/moveit.launch.py
 ```
+
 ---
 
-#### Check Whether Official Launch Uses `MoveItConfigsBuilder`
+##### Check Whether Official Launch Uses `MoveItConfigsBuilder`
 
 ```bash
 grep -R -n \
@@ -351,7 +354,7 @@ These parameters are required by MoveIt.
 
 ---
 
-#### Important MoveIt Configuration Items
+##### Important MoveIt Configuration Items
 
 MoveIt usually needs the following configuration:
 
@@ -380,7 +383,7 @@ Without these parameters, MoveIt may start but cannot correctly plan or execute 
 
 ---
 
-#### Step 3: Check Franka Controller Configuration
+### Step 3: Check Franka Controller Configuration
 
 Go to the Franka MoveIt config package:
 
@@ -388,6 +391,7 @@ Go to the Franka MoveIt config package:
 cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/config
 ls
 ```
+
 FInd:
 
 ```text
@@ -397,6 +401,7 @@ FInd:
 - ompl_planning.yaml
 - kinematics.yaml
 ```
+
 In "fr3_ros_controllers.yaml"
 
 ```text
@@ -405,6 +410,7 @@ JointTrajectoryController`.
 The command interface is effort
 
 ```
+
 This means MoveIt sends a desired joint trajectory, and the controller tracks the trajectory through effort control.(PID)
 
 Simplified control logic:
@@ -412,10 +418,12 @@ Simplified control logic:
 ```text
 effort = Kp(position_error) + Kd(velocity_error) + Ki(integral_error)
 ```
+
 or:
 ```text
 τ = Kp(q_desired - q_actual)+ Kd(qd_desired - qd_actual) + Ki∫(q_error dt)
 ```
+
 So MoveIt does not directly send torque for Cartesian motion.
 MoveIt sends a joint trajectory, and the controller converts tracking error into effort command.
 
@@ -473,7 +481,7 @@ active
 
 ---
 
-## Expected Motion Pipeline
+### Expected Motion Pipeline
 
 For the 1 cm downward Cartesian motion:
 
@@ -491,7 +499,7 @@ For the 1 cm downward Cartesian motion:
 
 ### Common Problems
 
-### 1. `robot_description` missing
+#### 1. `robot_description` missing
 
 Check:
 
@@ -509,7 +517,7 @@ If missing, the MoveIt launch file is not loading the URDF correctly.
 
 ---
 
-### 2. `robot_description_semantic` missing
+#### 2. `robot_description_semantic` missing
 
 This means the SRDF was not loaded.
 
@@ -521,7 +529,7 @@ fr3_arm
 
 ---
 
-### 3. `/joint_states` missing
+#### 3. `/joint_states` missing
 
 MoveIt cannot plan if it does not know the current robot state.
 
@@ -533,7 +541,7 @@ ros2 topic echo /joint_states
 
 ---
 
-### 4. Controller not active
+#### 4. Controller not active
 
 Check:
 
@@ -551,7 +559,7 @@ If it is inactive, MoveIt may plan successfully but fail during execution.
 
 ---
 
-### 5. Wrong controller interface assumption
+#### 5. Wrong controller interface assumption
 
 Do not assume Cartesian motion can be executed by directly publishing to the effort command interface.
 
@@ -567,7 +575,7 @@ Cartesian motion
 
 ---
 
-## Summary
+### Summary
 
 The reason for creating a custom launch file and Python file is:
 
@@ -593,8 +601,7 @@ Directly command hardware interface
 
 This makes the motion safer, more structured, and compatible with the official Franka ROS 2 MoveIt pipeline.
 
-
-#### Step 4  Experiment before actual running 
+### Step 4  Experiment before actual running
 
 ```bash
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
@@ -611,7 +618,7 @@ The package provides:
 
 ---
 
-## Planning test
+#### Planning test
 
 Run planning without executing the robot.
 
@@ -632,7 +639,7 @@ Verified:
 
 ---
 
-## Verify controller
+#### Verify controller
 
 Check the available trajectory action.
 
@@ -648,7 +655,7 @@ Expected output:
 
 ---
 
-## Verify Action Server
+#### Verify Action Server
 
 ```bash
 ros2 action info /fr3_arm_controller/follow_joint_trajectory
@@ -662,7 +669,7 @@ Action servers: 1
 
 ---
 
-## Verify controller status
+#### Verify controller status
 
 ```bash
 ros2 control list_controllers
@@ -678,7 +685,7 @@ franka_robot_state_broadcaster active
 
 ---
 
-## Execution issue
+#### Execution issue
 
 Planning succeeds, but execution reports
 
@@ -694,9 +701,10 @@ The Action Client may not have completed DDS discovery before the execution requ
         time.sleep(1.0)
         flush_and_exit(0)
 ```
+
 ---
 
-## Current workaround
+#### Current workaround
 
 Before
 
@@ -720,18 +728,18 @@ before sending the trajectory.
 
 ---
 
-## Current Progress
+#### Current Progress
 
--  Built a custom MoveItPy package
--  Loaded the official FR3 MoveIt configuration
--  Implemented relative Cartesian pose planning
--  Successfully generated trajectories
--  Verified controller and Action Server
--  Debugging Action Client connection timing before execution
+- Built a custom MoveItPy package
+- Loaded the official FR3 MoveIt configuration
+- Implemented relative Cartesian pose planning
+- Successfully generated trajectories
+- Verified controller and Action Server
+- Debugging Action Client connection timing before execution
 
-### Repository Structure
+#### Repository Structure
 
-```bash
+```text
 FR3 MoveIt Python
 │
 ├── README.md                 ← Project overview
@@ -748,4 +756,5 @@ FR3 MoveIt Python
 ├── package.xml               ← ROS2 package metadata
 └── setup.py                  ← Package installation
 ```
+
 
