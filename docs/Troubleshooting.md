@@ -60,6 +60,11 @@ To automatically source:
 echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
 ```
 
+Check result:
+```bash
+nano ~/.bashrc
+```
+
 ### 2. Workspace Build Failed
 
 #### Problem
