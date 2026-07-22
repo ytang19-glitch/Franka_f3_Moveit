@@ -199,7 +199,10 @@ ros2 launch fr3_moveit_python \
 
 The Cartesian motion demo uses MoveIt as the high-level planning layer between the Python command and the Franka hardware
 
-### Step 1 ; Workflow
+---
+## Miscellaneous
+
+### Misc 1 ; Workflow
 
 ```text
 Create ROS2 package
@@ -223,7 +226,7 @@ Source the workspace
 Launch the Cartesian motion node
 ```
 
-### Step 2 ; System Overview
+### Misc 2 ; System Overview
 
 The control flow is:
 
@@ -249,8 +252,121 @@ Franka FR3
 
 This is different from directly commanding the hardware interface.
 
+
+### Misc 3: Check Franka Controller Configuration
+
+Go to the Franka MoveIt config package:
+
+```bash
+cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/config
+ls
+```
+
+FInd:
+
+```text
+- fr3_ros_controllers.yaml
+- fr3_controllers.yaml
+- fr3_joint_limits.yaml
+- ompl_planning.yaml
+- kinematics.yaml
+```
+
+In "fr3_ros_controllers.yaml"
+
+```text
+fr3_arm_controller
+JointTrajectoryController`.
+The command interface is effort
+
+```
+
+This means MoveIt sends a desired joint trajectory, and the controller tracks the trajectory through effort control.(PID)
+
+Simplified control logic:
+
+```text
+effort = Kp(position_error) + Kd(velocity_error) + Ki(integral_error)
+```
+
+or:
+```text
+τ = Kp(q_desired - q_actual)+ Kd(qd_desired - qd_actual) + Ki∫(q_error dt)
+```
+
+So MoveIt does not directly send torque for Cartesian motion.
+MoveIt sends a joint trajectory, and the controller converts tracking error into effort command.
+
 ---
 
+#### Check Joint Topics
+
+List joint-related topics:
+
+```bash
+ros2 topic list | grep joint
+```
+
+Echo joint states:
+
+```bash
+ros2 topic echo /joint_states
+```
+
+Expected result:
+
+```text
+/joint_states should publish current FR3 joint positions and velocities
+```
+
+If `/joint_states` is missing, MoveIt cannot know the current robot state.
+
+---
+
+#### Check Controllers
+
+Check loaded controllers:
+
+```bash
+ros2 control list_controllers -c /fr3/controller_manager
+```
+
+Check hardware interfaces:
+
+```bash
+ros2 control list_hardware_interfaces -c /fr3/controller_manager
+```
+
+Expected controller:
+
+```text
+fr3_arm_controller
+```
+
+Expected state:
+
+```text
+active
+```
+
+---
+
+### Expected Motion Pipeline
+
+For the 1 cm downward Cartesian motion:
+
+```text
+1. Python node gets current end-effector pose
+2. Python node creates a new target pose 1 cm lower
+3. MoveIt computes Cartesian path
+4. MoveIt converts Cartesian path into joint trajectory
+5. fr3_arm_controller receives joint trajectory
+6. Controller tracks the trajectory
+7. Robot moves down by approximately 1 cm
+```
+
+---
+## Control Architecture
 #### Why Not Directly Use `command_interface`?
 
 The Franka controller uses a low-level hardware command interface, such as `effort`.
@@ -382,120 +498,6 @@ Without these parameters, MoveIt may start but cannot correctly plan or execute 
 
 ---
 
-### Step 3: Check Franka Controller Configuration
-
-Go to the Franka MoveIt config package:
-
-```bash
-cd ~/franka_ros2_ws/src/franka_fr3_moveit_config/config
-ls
-```
-
-FInd:
-
-```text
-- fr3_ros_controllers.yaml
-- fr3_controllers.yaml
-- fr3_joint_limits.yaml
-- ompl_planning.yaml
-- kinematics.yaml
-```
-
-In "fr3_ros_controllers.yaml"
-
-```text
-fr3_arm_controller
-JointTrajectoryController`.
-The command interface is effort
-
-```
-
-This means MoveIt sends a desired joint trajectory, and the controller tracks the trajectory through effort control.(PID)
-
-Simplified control logic:
-
-```text
-effort = Kp(position_error) + Kd(velocity_error) + Ki(integral_error)
-```
-
-or:
-```text
-τ = Kp(q_desired - q_actual)+ Kd(qd_desired - qd_actual) + Ki∫(q_error dt)
-```
-
-So MoveIt does not directly send torque for Cartesian motion.
-MoveIt sends a joint trajectory, and the controller converts tracking error into effort command.
-
----
-
-#### Check Joint Topics
-
-List joint-related topics:
-
-```bash
-ros2 topic list | grep joint
-```
-
-Echo joint states:
-
-```bash
-ros2 topic echo /joint_states
-```
-
-Expected result:
-
-```text
-/joint_states should publish current FR3 joint positions and velocities
-```
-
-If `/joint_states` is missing, MoveIt cannot know the current robot state.
-
----
-
-#### Check Controllers
-
-Check loaded controllers:
-
-```bash
-ros2 control list_controllers -c /fr3/controller_manager
-```
-
-Check hardware interfaces:
-
-```bash
-ros2 control list_hardware_interfaces -c /fr3/controller_manager
-```
-
-Expected controller:
-
-```text
-fr3_arm_controller
-```
-
-Expected state:
-
-```text
-active
-```
-
----
-
-### Expected Motion Pipeline
-
-For the 1 cm downward Cartesian motion:
-
-```text
-1. Python node gets current end-effector pose
-2. Python node creates a new target pose 1 cm lower
-3. MoveIt computes Cartesian path
-4. MoveIt converts Cartesian path into joint trajectory
-5. fr3_arm_controller receives joint trajectory
-6. Controller tracks the trajectory
-7. Robot moves down by approximately 1 cm
-```
-
----
-
 ### Common Problems
 
 #### 1. `robot_description` missing
@@ -600,7 +602,7 @@ Directly command hardware interface
 
 This makes the motion safer, more structured, and compatible with the official Franka ROS 2 MoveIt pipeline.
 
-### Step 4  Experiment before actual running
+## Experiment before actual running
 
 ```bash
 nano ~/franka_ros2_ws/src/fr3_moveit_python/fr3_moveit_python/cartesian_move.py
