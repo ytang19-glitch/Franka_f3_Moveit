@@ -139,7 +139,58 @@ Examples:
 * Design decisions
 * Problems and solutions
 * Verification results
+---
 
+### 3. Documented `package.xml`
+
+### Purpose
+
+Studied and documented the purpose and structure of `package.xml` in a ROS 2 package.
+
+The objective was to understand how ROS 2 packages describe their metadata and dependencies for the build system and runtime environment.
+
+Topics reviewed:
+
+- Package metadata (`name`, `version`, `description`)
+- Maintainer information
+- License declaration
+- Build tool dependencies
+- Build dependencies
+- Execution dependencies
+- Export configuration
+
+Example:
+
+```xml
+<package format="3">
+
+  <name>fr3_moveit_python</name>
+
+  <version>0.0.1</version>
+
+  <description>
+    MoveItPy examples for Franka FR3
+  </description>
+
+  <maintainer email="your_email@example.com">
+    Your Name
+  </maintainer>
+
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <exec_depend>rclpy</exec_depend>
+
+</package>
+```
+
+### Key Understanding
+
+- `package.xml` defines the package metadata rather than implementing application logic.
+- It allows ROS 2 tools to identify the package and resolve its dependencies.
+- Required libraries and packages should be declared explicitly to ensure successful building and execution.
+- Properly maintaining `package.xml` improves package portability, maintainability, and compatibility within the ROS 2 ecosystem.
 ---
 
 ## Result
