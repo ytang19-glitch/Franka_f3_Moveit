@@ -1,370 +1,279 @@
+# OMPL Planning Pipeline (MoveItPy / MoveItCpp)
 
-# Network Setup
+## Purpose
 
-This document describes the Ethernet network configuration required to connect a native Ubuntu 24.04 PC with the Franka FR3 robot.
-
-The network connection is required for:
-
-- Franka Control Interface (FCI)
-- libfranka communication
-- `franka_hardware`
-- ROS 2 controller communication
-- MoveIt trajectory execution
+This document explains how the OMPL planning pipeline is configured in this project and how each configuration block contributes to motion planning for the Franka FR3.
 
 ---
 
-## Network Architecture
+# Architecture Overview
 
-The communication structure:
-
-
-Ubuntu PC
-|
-| Ethernet Cable
-|
-Franka Control Box
-|
-|
-Franka FR3 Robot
-
-
-Recommended setup:
-
-             Internet
-
-                |
-              WiFi
-
-                |
-          Ubuntu PC
-                |
-          Ethernet
-      192.168.0.2
-                |
-                |
-      Franka Control Box
-      192.168.0.1
-                |
-                |
-           Franka FR3
-
-WiFi is used for:
-- Internet access
-- ROS package installation
-
-Ethernet is used for:
-- Robot communication
-- FCI connection
+```text
+MoveItPy Application
+        │
+        ▼
+Load Robot Description
+        │
+        ▼
+Planning Scene Monitor
+        │
+        ▼
+Planning Request
+        │
+        ▼
+Request Adapters
+        │
+        ▼
+OMPL Planner (RRTConnect)
+        │
+        ▼
+Response Adapters
+        │
+        ▼
+Time-Parameterized Trajectory
+        │
+        ▼
+Robot Controller
+```
 
 ---
 
-# 1. Hardware Requirements
+# 1. Load Planner Configuration
 
-Required:
+## Code
 
-- Ubuntu 24.04 PC
-- Ethernet cable
-- Franka FR3 robot
-- Franka Control Box
+```python
+ompl_yaml = load_yaml(
+    "franka_fr3_moveit_config",
+    "config/ompl_planning.yaml",
+)
+```
 
-Connect:
+## Purpose
 
+Loads planner-specific parameters from `config/ompl_planning.yaml`.
 
-PC Ethernet Port
-|
-|
-Franka Control Box Ethernet Port
+**Benefits**
 
+- Keeps planner parameters outside the source code.
+- Allows planners and tuning values to be modified without editing Python files.
 
 ---
 
-# 2. Check Ethernet Interface
+# 2. Configure the OMPL Pipeline
 
-Find the Ethernet interface:
+## Code
 
-```bash
-ip a
+```python
+ompl_pipeline = { ... }
+```
 
-Example:
+## Purpose
 
-2: enp0s31f6:
+Defines the complete planning pipeline used by MoveIt.
 
-In this example:
+The pipeline consists of four stages:
 
-Ethernet interface = enp0s31f6
+```text
+Planning Request
+      ↓
+Request Adapters
+      ↓
+OMPL Planner
+      ↓
+Response Adapters
+```
 
-Check Ethernet connection:
+---
 
-ethtool enp0s31f6
+# 3. Planning Plugin
 
-Expected:
+## Code
 
-Link detected: yes
-3. Configure Static IP Address
+```python
+"planning_plugins": [
+    "ompl_interface/OMPLPlanner",
+]
+```
 
-The PC and robot must be in the same subnet.
+## Purpose
 
-Default Franka network:
+Selects OMPL as the motion planning backend.
 
-Device	IP Address
-Franka Control Box	192.168.0.1
-Ubuntu PC	192.168.0.2
-Subnet Mask	255.255.255.0
-4. Configure Ubuntu Ethernet
-GUI Method
+**Responsibilities**
 
-Open:
+- Search for collision-free paths
+- Sample robot configurations
+- Generate joint trajectories
 
-Settings
- └── Network
-      └── Wired Connection
-           └── IPv4
+---
 
-Select:
+# 4. Request Adapters
 
-Manual
+Request adapters validate the planning request before planning begins.
 
-Set:
+| Adapter | Purpose |
+|---------|---------|
+| ResolveConstraintFrames | Resolve constraint reference frames. |
+| ValidateWorkspaceBounds | Validate workspace boundaries. |
+| CheckStartStateBounds | Verify joint limits of the current state. |
+| CheckStartStateCollision | Detect collisions before planning. |
 
-Address:
-192.168.0.2
+---
 
-Netmask:
-255.255.255.0
+# 5. Response Adapters
 
-Gateway:
-Leave empty
+Response adapters process the planned trajectory.
 
-Save and reconnect.
+| Adapter | Purpose |
+|---------|---------|
+| AddTimeOptimalParameterization | Compute timestamps, velocities and accelerations. |
+| ValidateSolution | Verify the planned trajectory. |
+| DisplayMotionPath | Publish the trajectory for RViz visualization. |
 
-Terminal Method
+---
 
-Find network connection:
+# 6. Start-State Tolerance
 
-nmcli connection show
+## Code
 
-Example:
+```python
+"start_state_max_bounds_error": 0.1
+```
 
-Wired connection 1
+## Purpose
 
-Configure:
+Defines the allowable joint-limit tolerance when validating the current robot state.
 
-sudo nmcli connection modify \
-"Wired connection 1" \
-ipv4.method manual \
-ipv4.addresses 192.168.0.2/24
+---
 
-Restart:
+# 7. Merge YAML Configuration
 
-sudo nmcli connection down \
-"Wired connection 1"
+## Code
 
-sudo nmcli connection up \
-"Wired connection 1"
-5. Verify Network Configuration
+```python
+if ompl_yaml:
+    ompl_pipeline.update(ompl_yaml)
+```
 
-Check IP:
+## Purpose
 
-ip addr
+Combines the default Python configuration with planner settings from the YAML file.
 
-Expected:
+---
 
-enp0s31f6
+# 8. Planning Scene Monitor
 
-inet 192.168.0.2/24
-6. Test Franka Connection
+## Purpose
 
-Ping the Franka controller:
+Maintains the robot model and planning environment.
 
-ping 192.168.0.1
+### Components
 
-Expected:
+| Parameter | Purpose |
+|----------|---------|
+| `robot_description` | Load the URDF model. |
+| `joint_state_topic` | Receive current joint states. |
+| `attached_collision_object_topic` | Track objects attached to the robot. |
+| `publish_planning_scene_topic` | Publish the planning scene. |
+| `monitored_planning_scene_topic` | Receive planning scene updates. |
+| `wait_for_initial_state_timeout` | Wait for the initial robot state. |
 
-64 bytes from 192.168.0.1
+---
 
-Successful ping confirms:
+# 9. Planning Pipeline Selection
 
-Ethernet connection works
-IP configuration is correct
-Robot controller is reachable
-7. Check Routing
+## Code
 
-Check:
+```python
+"planning_pipelines": {
+    "pipeline_names": ["ompl"],
+}
+```
 
-ip route
+## Purpose
 
-Expected:
+Registers the available planning pipelines.
 
-192.168.0.0/24 dev enp0s31f6
+This project uses a single planning pipeline:
 
-Example:
+- **OMPL**
 
-default via 172.28.0.1 dev wlp2s0
+---
 
-192.168.0.0/24 dev enp0s31f6
+# 10. Planning Request Parameters
 
-Meaning:
+| Parameter | Purpose |
+|-----------|---------|
+| `planning_attempts` | Number of planning attempts. |
+| `planning_pipeline` | Pipeline used for planning. |
+| `planner_id` | Selected OMPL planner (RRTConnect). |
+| `planning_time` | Maximum planning time. |
+| `max_velocity_scaling_factor` | Velocity scaling factor. |
+| `max_acceleration_scaling_factor` | Acceleration scaling factor. |
 
-WiFi
- |
- Internet
+### Planner
 
+```text
+RRTConnectkConfigDefault
+```
 
-Ethernet
- |
- Franka Robot
-8. Multiple Network Interfaces
+Chosen because it provides fast and reliable planning for industrial manipulators.
 
-A common configuration:
+---
 
-WiFi:
-172.28.x.x
+# 11. Attach the OMPL Pipeline
 
+## Code
 
-Ethernet:
-192.168.0.x
+```python
+"ompl": ompl_pipeline,
+```
 
-This is normal.
+## Purpose
 
-The robot communication must use:
+Adds the complete OMPL configuration to the MoveItPy configuration object.
 
-Ethernet interface
-        |
-        |
-192.168.0.x subnet
+---
 
-Check:
+# Complete Workflow
 
-ip route
-9. ROS 2 Network Configuration
+```text
+Python Application
+        │
+        ▼
+Load Robot Model
+        │
+        ▼
+Planning Scene Monitor
+        │
+        ▼
+Planning Request
+        │
+        ▼
+Request Adapters
+        │
+        ▼
+OMPL (RRTConnect)
+        │
+        ▼
+Response Adapters
+        │
+        ▼
+Time-Parameterized Trajectory
+        │
+        ▼
+Trajectory Execution
+```
 
-ROS 2 uses DDS communication.
+---
 
-Check ROS domain:
+# Key Takeaways
 
-echo $ROS_DOMAIN_ID
-
-Default:
-
-0
-
-Set:
-
-export ROS_DOMAIN_ID=0
-
-Permanent:
-
-echo "export ROS_DOMAIN_ID=0" >> ~/.bashrc
-10. Franka FCI Requirements
-
-Before launching ROS 2:
-
-Verify:
-
-Robot is powered on
-Emergency stop released
-Franka Desk shows robot ready
-FCI enabled
-
-Communication pipeline:
-
-ROS 2
- |
-franka_hardware
- |
-libfranka
- |
-FCI
- |
-Franka FR3
-11. Common Network Problems
-Problem: Ping Failed
-
-Error:
-
-Destination Host Unreachable
-
-Check:
-
-Ethernet cable
-ethtool enp0s31f6
-
-Expected:
-
-Link detected: yes
-IP address
-ip a
-
-PC:
-
-192.168.0.x
-
-Robot:
-
-192.168.0.1
-Problem: libfranka Timeout
-
-Error:
-
-libfranka: Connection timeout
-
-Possible causes:
-
-Wrong robot IP
-Incorrect Ethernet configuration
-FCI disabled
-Network conflict
-
-Check:
-
-ping 192.168.0.1
-Problem: ROS 2 Controller Cannot Connect
-
-Symptoms:
-
-Could not contact service:
-/controller_manager/list_controllers
-
-Check:
-
-ros2 node list
-
-Expected:
-
-/fr3/controller_manager
-12. Recommended Startup Sequence
-
-Follow this order:
-
-1. Connect Ethernet cable
-          |
-          ↓
-2. Configure PC static IP
-          |
-          ↓
-3. Ping Franka controller
-          |
-          ↓
-4. Enable FCI
-          |
-          ↓
-5. Launch Franka ROS 2 driver
-          |
-          ↓
-6. Start MoveIt
-          |
-          ↓
-7. Execute Cartesian Motion
-Network Verification Checklist
-
-Before running the FR3 Cartesian Motion Demo:
-
- Ethernet cable connected
- Ethernet interface detected
- Link status is UP
- PC IP configured as 192.168.0.x
- Robot IP 192.168.0.1 reachable
- FCI enabled
- libfranka connection established
- Franka ROS 2 driver running
- Controllers active
+- `ompl_planning.yaml` stores planner parameters.
+- `planning_plugins` selects the planning backend.
+- Request adapters validate the planning request.
+- Response adapters optimize and validate the generated trajectory.
+- The Planning Scene Monitor keeps the robot model and environment synchronized.
+- Planning request parameters control planner behavior and execution speed.
+- The complete configuration enables MoveItPy to generate safe, executable trajectories for the Franka FR3.
