@@ -1,34 +1,30 @@
-# July 22, 2026 — Repository Organization and Development Logging
+# July 22 — Repository Organization Development Log
 
-## Overview
+## Previous Goal
 
-Today’s work focused on organizing the following GitHub repositories:
-
-* `Learn_Docker`
-* `Franka_f3_Moveit`
-
-The main objective was to improve the repository structure and establish a consistent `Development/` directory for recording completed work, debugging processes, technical decisions, and future improvements.
+Continue improving the Franka FR3 software project and organize project documentation for long-term development.
 
 ---
 
-## Work Completed
+## Current Goal
 
-### 1. Organized the `Learn_Docker` Repository
+Organize project repositories, standardize the documentation structure, and establish a daily development logging workflow.
 
-Reviewed and reorganized the Docker learning materials to make the repository easier to understand and maintain.
+---
 
-The repository is intended to document:
+# Step 1: Organize `Learn_Docker` Repository
 
-* Docker installation and configuration
-* Docker service troubleshooting
-* Docker socket activation
-* Container development workflows
-* Common Docker commands
-* Problems encountered and their solutions
+### Purpose
 
-A `Development/` directory was added to store date-based development records.
+Reorganize the repository to improve readability and maintainability.
 
-Example structure:
+Completed:
+
+- Organized Docker learning materials
+- Structured installation and troubleshooting notes
+- Created a `Development/` directory for daily development logs
+
+Repository structure:
 
 ```text
 Learn_Docker/
@@ -36,31 +32,17 @@ Learn_Docker/
 ├── docs/
 ├── examples/
 └── Development/
-    └── 2026-07-22_Repository_Organization_Log.md
 ```
 
 ---
 
-### 2. Organized the `Franka_f3_Moveit` Repository
+# Step 2: Organize `Franka_f3_Moveit` Repository
 
-Reviewed and reorganized the Franka FR3 MoveIt repository.
+### Purpose
 
-The repository contains development work related to:
+Separate source code, documentation, and development records into independent modules.
 
-* Franka FR3 robot control
-* ROS 2 Jazzy
-* MoveItPy
-* Cartesian motion
-* Joint-space motion
-* Franka gripper control
-* Pick-and-place applications
-* Launch files
-* Hardware testing
-* Debugging and verification
-
-A `Development/` directory was created to record the development process independently from the main technical documentation.
-
-Example structure:
+Repository structure:
 
 ```text
 Franka_f3_Moveit/
@@ -71,29 +53,37 @@ Franka_f3_Moveit/
 ├── fr3_moveit_python/
 ├── docs/
 └── Development/
-    ├── 2026-07-21_Pick_and_Place_Development_Log.md
-    └── 2026-07-22_Repository_Organization_Log.md
 ```
 
 ---
 
-## Purpose of the `Development` Directory
+# Step 3: Document `package.xml`
 
-The `Development/` directory records the daily engineering process.
+### Purpose
 
-Each development log may include:
+Study the role of `package.xml` in a ROS 2 package.
 
-* Work completed
-* Features implemented
-* Files created or modified
-* Commands executed
-* Problems encountered
-* Root-cause analysis
-* Solutions and verification
-* Remaining issues
-* Planned next steps
+Topics reviewed:
 
-Each development day should use an independent Markdown file.
+- Package metadata
+- Maintainer and license
+- Build dependencies
+- Runtime dependencies
+- Export configuration
+
+### Key Understanding
+
+- `package.xml` defines package metadata and dependencies.
+- ROS 2 uses it to discover, build, and execute packages.
+- Proper dependency declarations improve portability and maintainability.
+
+---
+
+# Step 4: Build the `Development/` Directory
+
+### Purpose
+
+Create a standardized directory for recording daily engineering work.
 
 Naming convention:
 
@@ -101,118 +91,51 @@ Naming convention:
 YYYY-MM-DD_Topic_Development_Log.md
 ```
 
-Examples:
+Example:
 
 ```text
-2026-07-21_Pick_and_Place_Development_Log.md
-2026-07-22_Repository_Organization_Log.md
-2026-07-23_Cartesian_Motion_Development_Log.md
+Development/
+├── 2026-07-21_Pick_and_Place_Development_Log.md
+└── 2026-07-22_Repository_Organization_Log.md
 ```
 
 ---
 
-## Documentation Structure
-
-The repositories now separate documentation into two categories.
-
-### `docs/`
-
-Contains stable tutorials and technical documentation for users and students.
-
-Examples:
-
-* Installation instructions
-* System architecture
-* Package descriptions
-* Usage tutorials
-* Command references
-
-### `Development/`
-
-Contains chronological engineering records.
-
-Examples:
-
-* Daily development progress
-* Debugging records
-* Experimental code
-* Design decisions
-* Problems and solutions
-* Verification results
----
-
-### 3. Documented `package.xml`
+# Step 5: Separate `docs/` and `Development/`
 
 ### Purpose
 
-Studied and documented the purpose and structure of `package.xml` in a ROS 2 package.
+Separate stable documentation from daily engineering records.
 
-The objective was to understand how ROS 2 packages describe their metadata and dependencies for the build system and runtime environment.
+**docs/**
 
-Topics reviewed:
+- Installation guides
+- Tutorials
+- Package descriptions
+- System architecture
 
-- Package metadata (`name`, `version`, `description`)
-- Maintainer information
-- License declaration
-- Build tool dependencies
-- Build dependencies
-- Execution dependencies
-- Export configuration
+**Development/**
 
-Example:
+- Daily progress
+- Debugging logs
+- Design decisions
+- Technical solutions
 
-```xml
-<package format="3">
-
-  <name>fr3_moveit_python</name>
-
-  <version>0.0.1</version>
-
-  <description>
-    MoveItPy examples for Franka FR3
-  </description>
-
-  <maintainer email="your_email@example.com">
-    Your Name
-  </maintainer>
-
-  <license>Apache-2.0</license>
-
-  <buildtool_depend>ament_python</buildtool_depend>
-
-  <exec_depend>rclpy</exec_depend>
-
-</package>
-```
-
-### Key Understanding
-
-- `package.xml` defines the package metadata rather than implementing application logic.
-- It allows ROS 2 tools to identify the package and resolve its dependencies.
-- Required libraries and packages should be declared explicitly to ensure successful building and execution.
-- Properly maintaining `package.xml` improves package portability, maintainability, and compatibility within the ROS 2 ecosystem.
 ---
 
 ## Result
 
-The two repositories now have a clearer documentation structure.
-
-This organization makes it easier to:
-
-* Track development progress
-* Review previous problems and solutions
-* Maintain technical documentation
-* Teach future students
-* Continue development without losing previous work
-* Present the projects professionally on GitHub
+- Organized `Learn_Docker`
+- Organized `Franka_f3_Moveit`
+- Documented `package.xml`
+- Established the `Development/` directory
+- Standardized the repository documentation structure
 
 ---
 
-## Next Steps
+## Next Goal
 
-* Improve the main `README.md` files
-* Add links from each README to the `Development/` directory
-* Review filenames and folder naming conventions
-* Remove duplicated or obsolete documentation
-* Continue creating one development log for each major development session
-* Add screenshots, terminal outputs, and test results when useful
+- Improve the main `README.md`
+- Link documentation with development logs
+- Continue maintaining daily development records
+- Add diagrams, screenshots, and test results
