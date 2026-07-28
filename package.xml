@@ -21,6 +21,14 @@ Responsibilities:
 
 ----------------------------------------------------------
 
+
+
+
+
+
+
+
+
 <?xml version="1.0"?>
 <?xml-model
 href="http://download.ros.org/schema/package_format3.xsd"
@@ -92,7 +100,6 @@ schematypens="http://www.w3.org/2001/XMLSchema"?>
 
   <!-- Process URDF/SRDF Xacro files -->
   <exec_depend>xacro</exec_depend>
-
 
   <!-- ================================================== -->
   <!-- Franka Robot Configuration                         -->
